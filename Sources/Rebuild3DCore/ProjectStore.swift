@@ -25,7 +25,7 @@ public enum ProjectStore {
         let url = directory.appendingPathComponent("project.json")
         let data = try Data(contentsOf: url)
         let header = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard let storedVersion = header?["formatVersion"] as? Int, [1, ProjectManifest.currentVersion].contains(storedVersion) else {
+        guard let storedVersion = header?["formatVersion"] as? Int, [1, 2, ProjectManifest.currentVersion].contains(storedVersion) else {
             throw ProjectError.invalid("This project uses an unsupported format version.")
         }
         let decoder = JSONDecoder()
@@ -90,6 +90,9 @@ public enum ProjectStore {
                 }
             } else if model.inputSnapshotPath != nil || model.runID != nil {
                 throw ProjectError.invalid("The saved model has an incomplete run reference.")
+            }
+            if model.approximation != nil {
+                try ApproximateResultStore.validate(model: model, projectID: manifest.id, directory: directory)
             }
         }
     }
@@ -183,7 +186,8 @@ public enum ProjectStore {
 
     /// Commit a new immutable model before atomically switching the manifest pointer.
     /// A failed write leaves the previous successful model and manifest intact.
-    public static func commitModel(from source: URL, to project: Project, inputSnapshotPath: String? = nil) throws -> Project {
+    public static func commitModel(from source: URL, to project: Project, inputSnapshotPath: String? = nil,
+                                   approximation: ApproximationReference? = nil) throws -> Project {
         let snapshot = try inputSnapshotPath.map { try loadInputSnapshot($0, in: project.directory) }
         if let snapshot {
             guard snapshot.projectID == project.manifest.id, snapshot.settings == project.manifest.settings,
@@ -201,7 +205,7 @@ public enum ProjectStore {
             var updated = project
             updated.manifest.model = ModelRecord(path: path, createdAt: Date(), settings: project.manifest.settings,
                                                 photoIDs: project.manifest.photos.map(\.id), runID: snapshot?.runID,
-                                                inputSnapshotPath: inputSnapshotPath)
+                                                inputSnapshotPath: inputSnapshotPath, approximation: approximation)
             updated.manifest.modifiedAt = Date()
             try save(updated)
             updated.loadedFormatVersion = ProjectManifest.currentVersion
@@ -213,6 +217,10 @@ public enum ProjectStore {
     }
 
     public static func exportModel(_ project: Project, to destination: URL) throws {
+        if project.manifest.model?.approximation != nil {
+            try ApproximateResultStore.export(project, to: destination)
+            return
+        }
         guard let source = project.modelURL else { throw ProjectError.invalid("Reconstruct a model before exporting.") }
         guard source.standardizedFileURL != destination.standardizedFileURL else { return }
         let root = project.directory.resolvingSymlinksInPath().standardizedFileURL.path

@@ -16,6 +16,7 @@ final class AppModel {
     var errorMessage: String?
     var importIssues: [ImportIssue] = []
     var resetViewID = UUID()
+    var showProvenance = false
     var diagnostics: [String] = []
     var recoverableDrafts: [DraftSummary] = []
     let drafts = DraftProjectStore()
@@ -25,6 +26,7 @@ final class AppModel {
     var inputCheck: ReconstructionInputCheck { ReconstructionEngine.checkInput(project?.manifest.photos ?? []) }
     var canReconstruct: Bool { !isBusy && inputCheck.blockingReason == nil }
     var isDraft: Bool { project.map { drafts.contains($0.directory) } ?? false }
+    var displayedModelURL: URL? { showProvenance ? project?.provenanceModelURL ?? project?.modelURL : project?.modelURL }
 
     func refreshDrafts() {
         let store = drafts
@@ -39,6 +41,7 @@ final class AppModel {
     func newProject() {
         guard !isBusy, confirmLeavingProject() else { return }
         project = nil
+        showProvenance = false
         selectedPhotoID = nil
         importIssues = []
         diagnostics = []
@@ -80,12 +83,14 @@ final class AppModel {
 
     private func install(_ project: Project) {
         self.project = project
+        showProvenance = false
         selectedPhotoID = project.manifest.photos.first?.id
         importIssues = []
         isDirty = project.needsMigrationSave
         progress = nil
         diagnostics = []
         status = project.modelURL == nil ? "Add photos, then start reconstruction with the recommended settings." : "Saved model restored."
+        if project.manifest.model?.approximation != nil { status = "Approximate model restored with its inferred-region records." }
         if isDraft { status += " Draft recovered." }
         refreshDrafts()
     }
@@ -99,6 +104,24 @@ final class AppModel {
         panel.allowsMultipleSelection = true
         guard panel.runModal() == .OK else { return }
         importPhotos(panel.urls)
+    }
+
+    func loadApproximateResult() {
+        guard let project, !isBusy else { return }
+        let panel = NSOpenPanel()
+        panel.title = "Load Approximate Reconstruction Result"
+        panel.message = "Choose the research result folder. Original-photo identities and inferred-region records will be checked."
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let directory = panel.url else { return }
+        status = "Checking and saving approximate reconstruction…"
+        perform {
+            let updated = try await Task.detached { try ApproximateResultStore.importResult(from: directory, into: project) }.value
+            self.install(updated)
+            self.status = "Approximate reconstruction saved. Use Sources to inspect inferred and completed regions."
+            self.resetViewID = UUID()
+        }
     }
 
     func importPhotos(_ urls: [URL]) {
@@ -233,6 +256,7 @@ final class AppModel {
                 await self.receive(event)
             }
             self.project = updated
+            self.showProvenance = false
             self.progress = 1
             self.status = "Textured model saved. Inspect the result and export USDZ."
         }
@@ -262,10 +286,15 @@ final class AppModel {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "\(project.manifest.name).usdz"
         panel.allowedContentTypes = [.usdz]
+        if project.manifest.model?.approximation != nil {
+            panel.message = "Exports the USDZ and a companion .rebuild3d-result folder containing source regions, original-photo identities and research records."
+        }
         guard panel.runModal() == .OK, let destination = panel.url else { return }
         perform {
             try await Task.detached { try ProjectStore.exportModel(project, to: destination) }.value
-            self.status = "USDZ exported with its embedded materials and textures."
+            self.status = project.manifest.model?.approximation == nil
+                ? "USDZ exported with its embedded materials and textures."
+                : "Approximate USDZ exported with its companion source-region and provenance folder."
         }
     }
 

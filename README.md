@@ -17,7 +17,9 @@ textures. The HEIC set has also passed draft recovery, in-app reconstruction, sa
 release-build reopening, and export. Seven original 24.5 MP iPhone 16 Pro HEIC photos
 pass import, orientation, and persistence checks but fail during image alignment.
 Controlled format, depth, resolution, and sensitivity experiments did not resolve that
-failure. HDR display behavior and successful high-resolution resource baselines remain
+Object Capture failure. A separate local research pipeline now reconstructs that fixed
+seven-photo statue using VGGT predictions and silhouette-constrained depth fusion,
+with explicitly marked inferred and completed regions. HDR display behavior and successful high-resolution resource baselines remain
 unverified. Camera pose recovery and photo-aligned
 comparison remain P1 work; offline pose and projection probes do not enable them in the app.
 
@@ -25,11 +27,15 @@ The implementation plan and current evidence are maintained in
 [the v2 kickoff document](doc/Rebuild3D-项目启动文档-v2.md) and
 [the v2 acceptance record](doc/验收记录-v2-2026-10-08.md).
 
-The next exploration is defined in the
+The exploration is defined in the
 [seven-photo statue goal](doc/GOAL-七张照片佛像重建探索.md): keep the same seven source
 photos, seek a usable coarse 3D result, and explicitly label inferred or completed
-geometry while checking it against all original views. This may require an alternative
-geometry backend; it is a research plan, not an implemented fallback. The existing
+geometry while checking it against all original views. The research pipeline exports
+GLB, USDZ, per-face provenance, and seven-view comparisons. **Load Approximation**
+imports its result after checking exact original-photo hashes, and **Sources** shows
+inferred regions. This is a local research-result bridge; the regular **Reconstruct**
+button still uses Object Capture. VGGT and its weights are not bundled with the app.
+See the [execution record](doc/七张佛像-探索记录-2026-10-08.md) for commands and limitations. The existing
 workflow and diagnosis are preserved by the `v0.2.0-sparse-baseline` tag.
 
 ## Requirements
@@ -133,6 +139,7 @@ Object.rebuild3d/
   models/             # Immutable successful USDZ results
   runs/<run-id>/
     inputs.json       # Immutable source identity, working-image recipe, pixel transform
+    research/         # Optional approximation bundle, source regions and hashed artifacts
   logs/               # Run status, warnings, duration, memory observations, size
   cache/              # Disposable active-run staging
 ```
@@ -145,9 +152,14 @@ For an existing formal project, Save commits input and settings changes.
 Reconstruction saves current inputs first and commits a successful model automatically.
 Move the complete package to relocate it; saved models reopen without reconstruction.
 
-The current storage format is 2. Format 1 projects migrate in memory when opened;
+The current storage format is 3. Formats 1 and 2 migrate in memory when opened;
 their manifest is upgraded atomically on a successful save. Existing photo IDs and
 models are retained. Legacy models do not receive invented run or camera records.
+Older apps reject format 3 instead of silently displaying an approximation without
+its source labels. Approximate exports include a same-stem `.rebuild3d-result` folder
+containing the source-region USDZ and complete research records. Keep this folder with
+the ordinary USDZ. Choose a new name if that companion folder already exists; it is
+never silently replaced.
 
 New results become active only after an atomic manifest update. Cancellation or
 failure preserves the previous model. Failed photo and model copies are cleaned up,

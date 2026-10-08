@@ -75,3 +75,7 @@ DerivedData/
 xcuserdata/
 *.rebuild3d/
 .DS_Store
+
+# Local Python research helpers
+__pycache__/
+*.pyc

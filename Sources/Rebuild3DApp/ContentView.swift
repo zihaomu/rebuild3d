@@ -35,6 +35,9 @@ struct ContentView: View {
                 Button(action: model.openProject) { Label("Open", systemImage: "folder") }.disabled(model.isBusy)
                 Button(action: model.choosePhotos) { Label("Add Photos", systemImage: "photo.badge.plus") }
                     .disabled(model.isBusy)
+                Button(action: model.loadApproximateResult) { Label("Load Approximation", systemImage: "cube.box") }
+                    .disabled(model.isBusy || (model.project?.manifest.photos.isEmpty ?? true))
+                    .help("Load a research result and verify it belongs to these original photos.")
                 if !model.recoverableDrafts.isEmpty {
                     Menu {
                         ForEach(model.recoverableDrafts) { draft in
@@ -111,16 +114,28 @@ struct ContentView: View {
 
     private var viewport: some View {
         ZStack {
-            if let url = model.project?.modelURL {
+            if let url = model.displayedModelURL {
                 ModelViewport(url: url, resetID: model.resetViewID) { model.errorMessage = $0 }
                 VStack {
                     HStack {
                         Text("Free View").font(.caption).padding(8).background(.regularMaterial, in: Capsule())
+                        if model.project?.manifest.model?.approximation != nil {
+                            Text("Approximate").font(.caption.bold()).foregroundStyle(.orange)
+                                .padding(8).background(.regularMaterial, in: Capsule())
+                            Toggle("Sources", isOn: $model.showProvenance).toggleStyle(.button)
+                                .help("Orange: learned inference. Purple: silhouette completion. Neither is measured geometry.")
+                        }
                         Spacer()
                         Button("Reset View", systemImage: "arrow.counterclockwise") { model.resetViewID = UUID() }
                             .buttonStyle(.bordered).background(.regularMaterial, in: Capsule())
                     }
                     Spacer()
+                    if model.project?.manifest.model?.approximation != nil {
+                        Text(model.showProvenance
+                             ? "Orange: learned depth · Purple: silhouette completion · All geometry is inferred"
+                             : "Approximate geometry · Relative scale · View Sources for inferred regions")
+                            .font(.caption).padding(8).background(.regularMaterial, in: Capsule())
+                    }
                     Text("Drag to orbit · Scroll to zoom · Shift-drag to pan")
                         .font(.caption).padding(8).background(.regularMaterial, in: Capsule())
                 }.padding()

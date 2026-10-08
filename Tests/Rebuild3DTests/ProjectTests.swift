@@ -45,6 +45,93 @@ private final class Fixture {
         try Data(content.utf8).write(to: url)
         return url
     }
+
+    func approximateBundle(for project: Project) throws -> URL {
+        let directory = root.appendingPathComponent("result-\(UUID())")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        var artifacts: [ApproximateResultBundle.Artifact] = []
+        for name in ["model.usdz", "provenance.usdz"] {
+            let file = directory.appendingPathComponent(name)
+            try Data("Persistence-only fixture: \(name)".utf8).write(to: file)
+            artifacts.append(.init(path: name, sha256: try PhotoInspector.contentSHA256(at: file),
+                                   byteCount: try Data(contentsOf: file).count))
+        }
+        let bundle = ApproximateResultBundle(formatVersion: 1, kind: "approximate", method: "test learned reconstruction",
+            createdAt: "2026-10-08T00:00:00Z", sourcePhotos: project.manifest.photos.map { .init(name: $0.originalName, sha256: $0.metadata!.contentSHA256) },
+            model: "model.usdz", provenanceModel: "provenance.usdz", artifacts: artifacts, triangleCount: 100,
+            completionTriangleCount: 20, limitations: ["Geometry is inferred, not measured."])
+        try JSONEncoder().encode(bundle).write(to: directory.appendingPathComponent("bundle.json"))
+        return directory
+    }
+}
+
+@Test func approximationSurvivesProjectMoveWithPhotoIdentityAndSources() throws {
+    let fixture = try Fixture()
+    let original = try fixture.importedProject()
+    let bundle = try fixture.approximateBundle(for: original)
+    let saved = try ApproximateResultStore.importResult(from: bundle, into: original)
+    #expect(saved.manifest.photos == original.manifest.photos)
+    #expect(saved.manifest.model?.photoIDs == original.manifest.photos.map(\.id))
+    #expect(saved.manifest.model?.runID != nil)
+    #expect(saved.provenanceModelURL != nil)
+    try FileManager.default.removeItem(at: bundle)
+    let destination = fixture.root.appendingPathComponent("Approximation.rebuild3d")
+    try FileManager.default.moveItem(at: saved.directory, to: destination)
+    let reopened = try ProjectStore.open(destination)
+    #expect(reopened.manifest.formatVersion == 3)
+    #expect(reopened.manifest.model?.approximation == saved.manifest.model?.approximation)
+    #expect(FileManager.default.isReadableFile(atPath: try #require(reopened.provenanceModelURL).path))
+}
+
+@Test func incompatibleOrDamagedApproximationNeverReplacesSavedModel() throws {
+    let fixture = try Fixture()
+    let project = try ProjectStore.commitModel(from: fixture.model("old.usdz", content: "old"), to: fixture.importedProject())
+    let bundle = try fixture.approximateBundle(for: project)
+    let previous = try Data(contentsOf: project.directory.appendingPathComponent("project.json"))
+    var wrongPhotos = project
+    wrongPhotos.manifest.photos = []
+    #expect(throws: ProjectError.self) { try ApproximateResultStore.importResult(from: bundle, into: wrongPhotos) }
+    var invalid = project
+    invalid.manifest.formatVersion = 999
+    #expect(throws: ProjectError.self) { try ApproximateResultStore.importResult(from: bundle, into: invalid) }
+    #expect(try FileManager.default.contentsOfDirectory(atPath: project.directory.appendingPathComponent("runs").path).isEmpty)
+    #expect(try FileManager.default.contentsOfDirectory(atPath: project.directory.appendingPathComponent("cache").path).isEmpty)
+    #expect(try FileManager.default.contentsOfDirectory(atPath: project.directory.appendingPathComponent("models").path).count == 1)
+    try Data("damaged source-region file".utf8).write(to: bundle.appendingPathComponent("provenance.usdz"))
+    #expect(throws: ProjectError.self) { try ApproximateResultStore.importResult(from: bundle, into: project) }
+    #expect(try Data(contentsOf: project.directory.appendingPathComponent("project.json")) == previous)
+    #expect(try Data(contentsOf: #require(project.modelURL)) == Data("old".utf8))
+}
+
+@Test func approximationExportKeepsReimportableSourcesAndProtectsExistingCompanion() throws {
+    let fixture = try Fixture()
+    let project = try fixture.importedProject()
+    let saved = try ApproximateResultStore.importResult(from: fixture.approximateBundle(for: project), into: project)
+    let destination = fixture.root.appendingPathComponent("export.usdz")
+    try ProjectStore.exportModel(saved, to: destination)
+    let companion = fixture.root.appendingPathComponent("export.rebuild3d-result")
+    let exported = try ApproximateResultStore.load(companion)
+    #expect(exported.kind == "approximate" && exported.completionTriangleCount == 20)
+    #expect(try Data(contentsOf: destination) == Data(contentsOf: #require(saved.modelURL)))
+    let before = try Data(contentsOf: destination)
+    #expect(throws: ProjectError.self) { try ProjectStore.exportModel(saved, to: destination) }
+    #expect(try Data(contentsOf: destination) == before)
+    #expect(throws: ProjectError.self) { try ProjectStore.exportModel(saved, to: saved.directory.appendingPathComponent("images/export.usdz")) }
+    try FileManager.default.removeItem(at: #require(saved.provenanceModelURL))
+    #expect(throws: (any Error).self) { try ProjectStore.open(saved.directory) }
+}
+
+@Test func versionTwoProjectOpensWithoutRewritingOriginalManifest() throws {
+    let fixture = try Fixture()
+    let project = try fixture.importedProject()
+    let path = project.directory.appendingPathComponent("project.json")
+    var object = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: path)) as? [String: Any])
+    object["formatVersion"] = 2
+    let legacy = try JSONSerialization.data(withJSONObject: object)
+    try legacy.write(to: path)
+    let opened = try ProjectStore.open(project.directory)
+    #expect(opened.loadedFormatVersion == 2 && opened.needsMigrationSave)
+    #expect(try Data(contentsOf: path) == legacy)
 }
 
 @Test func importPreservesOriginalAndOrientationAfterProjectMove() throws {
@@ -253,7 +340,7 @@ private final class Fixture {
     try original.write(to: manifestURL)
     let migrated = try ProjectStore.open(project.directory)
     #expect(migrated.needsMigrationSave)
-    #expect(migrated.manifest.formatVersion == 2)
+    #expect(migrated.manifest.formatVersion == ProjectManifest.currentVersion)
     #expect(migrated.manifest.photos.map(\.id) == project.manifest.photos.map(\.id))
     #expect(migrated.manifest.photos.first?.metadata?.contentSHA256 != nil)
     #expect(migrated.manifest.model?.path == project.manifest.model?.path)

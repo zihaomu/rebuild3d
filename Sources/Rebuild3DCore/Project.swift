@@ -29,10 +29,12 @@ public struct ModelRecord: Codable, Equatable, Sendable {
     public var photoIDs: [UUID]
     public var runID: UUID?
     public var inputSnapshotPath: String?
+    public var approximation: ApproximationReference? = nil
 }
 
 public struct ProjectManifest: Codable, Equatable, Sendable {
-    public static let currentVersion = 2
+    // Older apps must not silently display an approximation without its provenance.
+    public static let currentVersion = 3
     public var formatVersion = currentVersion
     public var id: UUID = UUID()
     public var name: String
@@ -57,6 +59,9 @@ public struct Project: Sendable {
     public var needsMigrationSave: Bool { loadedFormatVersion < ProjectManifest.currentVersion }
     public var modelURL: URL? {
         manifest.model.flatMap { try? ProjectStore.resolve($0.path, in: directory) }
+    }
+    public var provenanceModelURL: URL? {
+        manifest.model?.approximation.flatMap { try? ProjectStore.resolve($0.provenanceModelPath, in: directory) }
     }
     public var modelIsOutdated: Bool {
         guard let model = manifest.model else { return false }

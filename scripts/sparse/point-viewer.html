@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>佛像研究 · 学习深度点云</title>
+<style>
+body{margin:0;background:#15191f;color:#e8edf3;font:14px system-ui}header{padding:18px 24px;position:absolute;z-index:1;background:#15191fe6;border-radius:0 0 16px 0;max-width:640px}h1{font-size:20px;margin:0 0 8px}p{margin:8px 0;line-height:1.5;color:#b7c2cd}button,select{background:#283240;border:1px solid #556171;color:inherit;border-radius:6px;padding:7px;margin:4px}canvas{display:block;width:100vw;height:100vh}.legend{color:#f4a02a}
+</style><header><h1>佛像 · 学习深度点云（中间结果）</h1><p>拖动旋转 · 滚轮缩放。当前点云尚未通过 7 视角一致性验收。<br>颜色取自原图；全部几何与相机均为学习推断。</p><button id="color">显示推断来源</button><button id="reset">重置视角</button><select id="view"><option value="-1">全部输入表面</option></select><p class="legend" id="legend">来源：橙色 = 学习推断；尚无已验证的多视角区域。</p><p id="count"></p></header><canvas id="canvas"></canvas>
+<script>
+const data=/*DATA*/null;
+const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d'),select=document.querySelector('#view');
+data.names.forEach((name,i)=>{const o=document.createElement('option');o.value=i;o.textContent=name;select.appendChild(o)});
+let yaw=0,pitch=0,zoom=1,colored=true,drag=null,pending=false;
+function render(){pending=false;canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.fillStyle='#15191f';ctx.fillRect(0,0,canvas.width,canvas.height);
+ if(data.fused){document.querySelector('h1').textContent='佛像 · 粗网格顶点预览';document.querySelector('header p').textContent='拖动旋转 · 滚轮缩放。此网格已完成 7 个输入视角检查，仍全部属于近似推断，并非实测几何。';document.querySelector('#legend').textContent='橙色 = 学习深度推断；紫色 = 轮廓补全。下拉菜单按取色照片筛选。'}
+ const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch),points=[];
+ data.p.forEach((p,i)=>{if(+select.value>=0&&data.v[i]!==+select.value)return;let x=p[0]*cy+p[2]*sy,z=-p[0]*sy+p[2]*cy,y=p[1]*cp-z*sp;z=p[1]*sp+z*cp;points.push([x,y,z,i])});
+ points.sort((a,b)=>a[2]-b[2]);let s=Math.min(canvas.width,canvas.height)*.36*zoom;
+ for(const [x,y,z,i] of points){const k=4/(4-z),c=data.c[i];ctx.fillStyle=colored?`rgb(${c.join(',')})`:(data.r[i]?'#c558eb':'#f4a02a');const r=Math.max(1.2,1.8*devicePixelRatio*zoom*k);ctx.fillRect(canvas.width*.56+x*s*k,canvas.height*.54-y*s*k,r,r)}
+ document.querySelector('#count').textContent=`显示 ${points.length.toLocaleString()} 个抽样点 · 共 ${data.names.length} 张真实照片输入`;
+}
+function schedule(){if(!pending){pending=true;requestAnimationFrame(render)}}
+canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId)};
+canvas.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.008;pitch+=(e.clientY-drag[1])*.008;drag=[e.clientX,e.clientY];schedule()};canvas.onpointerup=()=>drag=null;
+canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.2,Math.min(6,zoom*Math.exp(-e.deltaY*.001)));schedule()},{passive:false});
+document.querySelector('#color').onclick=()=>{colored=!colored;document.querySelector('#color').textContent=colored?'显示推断来源':'显示照片颜色';schedule()};document.querySelector('#reset').onclick=()=>{yaw=pitch=0;zoom=1;schedule()};select.onchange=schedule;onresize=schedule;render();
+</script></html>
