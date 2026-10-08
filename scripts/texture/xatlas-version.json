@@ -1,0 +1,15 @@
+{
+  "package": "xatlas",
+  "version": "0.0.11",
+  "installedFrom": "PyPI",
+  "releaseTag": "v0.0.11",
+  "bindingReleaseCommit": "24d7e3e99e498eb11a94f5efd54fd9f754f2b88a",
+  "releaseXatlasSubmoduleCommit": "f700c7790aaa030e794b52ba7791a05c085faf0c",
+  "releasePybind11SubmoduleCommit": "a2e59f0e7065404b44dfe92a28aca47ba1378dc4",
+  "verification": "Source tag and its git tree verified against upstream; registry wheel is pinned by installed binary SHA, not claimed independently rebuilt from source.",
+  "installedFileSHA256": {
+    "xatlas-0.0.11.dist-info/METADATA": "03903b6964676eb07476ca7df235b37b244faac00cca303b4798e2f53dcf30da",
+    "xatlas-0.0.11.dist-info/licenses/LICENSE": "095750fc0f9031d1a517cf734690d50cfd98c08a1d09473be006b86f488a4fc8",
+    "xatlas.cpython-312-darwin.so": "07002ad095c3520a1189f7ec93399327252ea551f10291fe98b86a930722cdb5"
+  }
+}

@@ -1,0 +1,39 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>佛像纹理 · GLB 独立验证</title>
+<style>body{margin:0;background:#222;color:#eee;font:15px system-ui}header{position:absolute;z-index:1;padding:18px;max-width:650px;background:#222d;border-radius:0 0 12px 0}h1{font-size:20px;margin:0 0 8px}p{margin:7px 0;line-height:1.5}select,button{font:inherit;padding:6px;margin-right:12px}canvas{display:block;width:100vw;height:100vh}#legend{display:none;width:570px;max-width:90vw}</style>
+<header><h1>佛像主体 · 第二阶段纹理</h1><p>七张原照片取色；全部几何仍为推测，比例不是实测尺寸。<br>拖动旋转，滚轮缩放。此页直接读取 GLB 内嵌纹理，采用无额外光照显示。</p>
+<select id="asset" aria-label="模型显示方式"><option value="model.glb">照片纹理</option><option value="texture-sources.glb">纹理来源（灰色为外观填充）</option></select><button id="reset">重置</button><p id="status">正在加载…</p><img id="legend" src="texture-source-legend.png" alt="灰色为外观填充，七种颜色对应七张照片"></header><canvas id="scene" aria-label="可旋转的佛像三维模型"></canvas>
+<script>
+'use strict';
+const canvas=document.querySelector('canvas'),gl=canvas.getContext('webgl2',{antialias:true}),status=document.querySelector('#status');
+if(!gl)throw Error('WebGL2 unavailable');
+function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+const program=gl.createProgram();
+gl.attachShader(program,shader(gl.VERTEX_SHADER,`#version 300 es
+in vec3 position;in vec2 uv;uniform vec3 center;uniform vec4 view;out vec2 texcoord;
+void main(){vec3 p=position-center;float c=cos(view.x),s=sin(view.x);p=vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);c=cos(view.y);s=sin(view.y);p=vec3(p.x,c*p.y-s*p.z,s*p.y+c*p.z);p.z-=view.z;float f=2.1445069;gl_Position=vec4(p.x*f/view.w,p.y*f,-1.00020002*p.z-.020002,-p.z);texcoord=uv;}`));
+gl.attachShader(program,shader(gl.FRAGMENT_SHADER,`#version 300 es
+precision highp float;in vec2 texcoord;uniform sampler2D color;out vec4 pixel;void main(){pixel=vec4(texture(color,texcoord).rgb,1.);}`));
+gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
+let primitives=[],textures=[],buffers=[],center=[0,0,0],distance=4,baseDistance=4,yaw=0,pitch=0,drag=null;
+const loc={p:gl.getAttribLocation(program,'position'),u:gl.getAttribLocation(program,'uv'),c:gl.getUniformLocation(program,'center'),v:gl.getUniformLocation(program,'view')};
+async function load(file){
+ status.textContent='正在读取完整 GLB…';const raw=await(await fetch(file)).arrayBuffer(),dv=new DataView(raw);
+ if(dv.getUint32(0,true)!==0x46546c67||dv.getUint32(4,true)!==2)throw Error('Not GLB 2');
+ let doc,bin;for(let p=12;p<raw.byteLength;){const n=dv.getUint32(p,true),type=dv.getUint32(p+4,true);const block=raw.slice(p+8,p+8+n);if(type===0x4e4f534a)doc=JSON.parse(new TextDecoder().decode(block));if(type===0x004e4942)bin=block;p+=8+n}
+ if(doc.buffers.some(x=>x.uri)||doc.images.some(x=>x.uri))throw Error('External resource found');
+ if(doc.nodes.some(n=>n.translation||n.rotation||n.scale||(n.matrix&&n.matrix.some((v,i)=>v!==([0,5,10,15].includes(i)?1:0)))))throw Error('This verification viewer expects baked identity node transforms');
+ for(const p of primitives)gl.deleteVertexArray(p.vao);for(const t of textures)gl.deleteTexture(t);for(const b of buffers)gl.deleteBuffer(b);primitives=[];textures=[];buffers=[];
+ const textureImages=[];
+ for(const im of doc.images){const b=doc.bufferViews[im.bufferView];const bitmap=await createImageBitmap(new Blob([bin.slice(b.byteOffset||0,(b.byteOffset||0)+b.byteLength)],{type:im.mimeType}));const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,bitmap);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);textureImages.push(t);textures.push(t);bitmap.close()}
+ const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];let triangles=0;
+ function bind(index,target,attribute){const ac=doc.accessors[index],bv=doc.bufferViews[ac.bufferView],b=gl.createBuffer();buffers.push(b);gl.bindBuffer(target,b);gl.bufferData(target,new Uint8Array(bin,bv.byteOffset||0,bv.byteLength),gl.STATIC_DRAW);if(attribute!==undefined){gl.enableVertexAttribArray(attribute);gl.vertexAttribPointer(attribute,{VEC2:2,VEC3:3}[ac.type],ac.componentType,!!ac.normalized,bv.byteStride||0,ac.byteOffset||0)}return ac}
+ for(const mesh of doc.meshes)for(const p of mesh.primitives){if((p.mode??4)!==4)throw Error('Expected triangles');const vao=gl.createVertexArray();gl.bindVertexArray(vao);const ac=bind(p.attributes.POSITION,gl.ARRAY_BUFFER,loc.p);for(let i=0;i<3;i++){min[i]=Math.min(min[i],ac.min[i]);max[i]=Math.max(max[i],ac.max[i])}bind(p.attributes.TEXCOORD_0,gl.ARRAY_BUFFER,loc.u);const idx=bind(p.indices,gl.ELEMENT_ARRAY_BUFFER);const texIndex=doc.materials[p.material].pbrMetallicRoughness.baseColorTexture.index;primitives.push({vao,count:idx.count,type:idx.componentType,offset:idx.byteOffset||0,texture:textureImages[doc.textures[texIndex].source]});triangles+=idx.count/3}
+ center=min.map((v,i)=>(v+max[i])/2);baseDistance=Math.max(...max.map((v,i)=>v-min[i]))*1.65;distance=baseDistance;yaw=pitch=0;
+ document.querySelector('#legend').style.display=file.startsWith('texture-')?'block':'none';status.textContent=`已载入 ${triangles.toLocaleString()} 个三角面 · 内嵌纹理 · 无外部资源`;render();
+}
+function render(){canvas.width=Math.round(innerWidth*devicePixelRatio);canvas.height=Math.round(innerHeight*devicePixelRatio);gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.12,.12,.12,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.useProgram(program);gl.uniform3fv(loc.c,center);gl.uniform4f(loc.v,yaw,pitch,distance,canvas.width/canvas.height);for(const p of primitives){gl.bindVertexArray(p.vao);gl.bindTexture(gl.TEXTURE_2D,p.texture);gl.drawElements(gl.TRIANGLES,p.count,p.type,p.offset)}}
+canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId)};canvas.onpointermove=e=>{if(!drag)return;yaw+=(e.clientX-drag[0])*.008;pitch=Math.max(-1.5,Math.min(1.5,pitch+(e.clientY-drag[1])*.008));drag=[e.clientX,e.clientY];render()};canvas.onpointerup=()=>drag=null;
+canvas.addEventListener('wheel',e=>{e.preventDefault();distance=Math.max(baseDistance*.2,Math.min(baseDistance*4,distance*Math.exp(e.deltaY*.001)));render()},{passive:false});
+document.querySelector('#reset').onclick=()=>{yaw=pitch=0;distance=baseDistance;render()};document.querySelector('#asset').onchange=e=>load(e.target.value).catch(err=>status.textContent=err.message);onresize=render;load('model.glb').catch(err=>status.textContent=err.message);
+</script></html>

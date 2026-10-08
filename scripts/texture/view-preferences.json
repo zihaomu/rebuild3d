@@ -1,0 +1,13 @@
+{
+  "coordinateSystem": "1200 x 1600 upright working pixels; select visible original face centers",
+  "method": "Audited regional source preference; never bypass visibility, foreground mask or per-texel occlusion checks",
+  "regions": [
+    {
+      "id": "left-forearm-and-cuff",
+      "photo": "IMG_4525.HEIC",
+      "polygon": [[427,541],[462,536],[487,550],[521,555],[559,548],[592,535],[631,559],[624,594],[612,630],[579,647],[534,635],[507,620],[475,606],[449,583]],
+      "reason": "This view clearly resolves the continuous cuff, wrist and lower sleeve. The automatic choice IMG_4524 is brighter but its projection displaces the cuff relative to IMG_4525; preserve one observed view for this entire local surface patch instead of blending displaced details. Other views remain validation views."
+    }
+  ],
+  "limitations": "Manual source preference is not geometric calibration; validate all seven views and retain camera/surface uncertainty."
+}

@@ -1,0 +1,2 @@
+# Install after scripts/sparse/requirements-macos.lock, in the local research environment.
+xatlas==0.0.11

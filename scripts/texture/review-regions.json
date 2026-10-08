@@ -1,0 +1,15 @@
+{
+  "coordinateSpace": "upright working photo, 1200x1600, top-left, integer pixel centers",
+  "frozenBeforeEnhancement": true,
+  "selection": "Visually selected from original photos before any stage-2 candidate. All eight contain discernible photographed detail. No later replacement allowed.",
+  "regions": [
+    {"id":"crown","photo":"IMG_4523.HEIC","box":[545,230,680,355],"surface":"front crown relief","detail":"small central seated figure and curved relief","issue":"low resolution and per-face color"},
+    {"id":"face","photo":"IMG_4523.HEIC","box":[555,362,675,482],"surface":"face","detail":"eyes, moustache and mouth edges","issue":"low resolution; geometry also approximate"},
+    {"id":"chest","photo":"IMG_4523.HEIC","box":[548,510,735,585],"surface":"chest armor","detail":"diamond grid and circular plate rim","issue":"pattern blurred"},
+    {"id":"instrument","photo":"IMG_4523.HEIC","box":[494,700,626,826],"surface":"instrument lower front and hand","detail":"carved outline, strings and fingers","issue":"blurring and local geometry"},
+    {"id":"front_armor","photo":"IMG_4523.HEIC","box":[279,877,465,968],"surface":"front left thigh armor","detail":"repeating metal pattern and border","issue":"pattern lost"},
+    {"id":"side_sleeve","photo":"IMG_4525.HEIC","box":[471,553,601,625],"surface":"side forearm cuff","detail":"band pattern and folds","issue":"dark region and projection quality"},
+    {"id":"back_armor","photo":"IMG_4527.HEIC","box":[482,425,677,532],"surface":"back armor","detail":"repeated interlocking motif","issue":"low resolution and potential seams"},
+    {"id":"back_rock","photo":"IMG_4527.HEIC","box":[370,905,700,1020],"surface":"rear rock upper ledge","detail":"rock pits and color variation","issue":"blocky color"}
+  ]
+}

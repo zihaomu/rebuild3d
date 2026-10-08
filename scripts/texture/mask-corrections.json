@@ -1,0 +1,43 @@
+{
+  "coordinateSystem": "1200 x 1600 upright working pixels, integer centers; transformed to full image with half-pixel resize convention",
+  "reviewMethod": "Manual inspection of all seven whole images and native-resolution edge/gap crops. Background-only polygons; sampling mask only, no geometry removed.",
+  "reviewTimeEstimateMinutes": 20,
+  "manualExclusionMarginWorkingPixels": 6,
+  "instrumentSkyExclusion": {
+    "reason": "Native photo review identifies strongly blue sky inside instrument apertures; the inherited Vision mask closes some holes. Reject blue background samples only in these inspected instrument boxes, retaining geometry as inferred fill.",
+    "blueRedRatio": 1.25,
+    "blueGreenRatio": 1.08,
+    "minimumBlueMinusRed": 25,
+    "fullPixelMargin": 3,
+    "boxes": {"IMG_4523.HEIC":[930,310,1105,515],"IMG_4524.HEIC":[600,150,800,350],"IMG_4525.HEIC":[345,180,415,330],"IMG_4526.HEIC":[250,340,390,520],"IMG_4527.HEIC":[190,365,365,510],"IMG_4529.HEIC":[790,480,840,645]}
+  },
+  "lowerBoundaryMarginWorkingPixels": 8,
+  "perPhotoLowerBoundaryMarginWorkingPixels": {"IMG_4527.HEIC":16,"IMG_4528.HEIC":16},
+  "lowerBoundaryMarginStartsAtWorkingY": 1100,
+  "lowerMarginReason": "Inherited coarse rock/plinth cut includes thin plinth strips. Reject an extra sampling band around the lower silhouette; retain its geometry and mark unavailable color as appearance fill. No erosion of the upper thin instrument.",
+  "backgroundPolygons": {
+    "IMG_4523.HEIC": [
+      [[280,680],[329,691],[349,694],[353,703],[360,701],[367,706],[376,718],[389,724],[393,731],[386,750],[380,764],[378,780],[380,795],[370,850],[280,850]],
+      [[380,802],[392,810],[406,820],[419,826],[438,831],[457,831],[458,836],[440,840],[423,843],[400,848],[380,857]],
+      [[472,718],[482,712],[489,705],[491,692],[493,706],[491,723],[492,741],[497,750],[486,753],[482,742],[478,730]],
+      [[754,719],[774,731],[793,740],[804,746],[815,755],[822,762],[822,769],[800,768],[780,769],[757,774],[741,781],[744,755]]
+    ],
+    "IMG_4524.HEIC": [
+      [[697,701],[712,706],[727,714],[731,719],[718,728],[701,736],[686,741],[692,722]]
+    ],
+    "IMG_4525.HEIC": [],
+    "IMG_4526.HEIC": [
+      [[300,638],[423,638],[445,647],[460,654],[471,665],[479,682],[487,696],[482,711],[484,727],[491,741],[498,747],[456,740],[420,737],[380,732],[340,730],[300,735]]
+    ],
+    "IMG_4527.HEIC": [
+      [[350,676],[367,669],[390,662],[411,653],[428,643],[435,653],[437,677],[432,688],[412,695],[390,696],[372,694],[360,697],[350,691]],
+      [[682,659],[688,659],[689,674],[708,684],[691,715],[679,706],[680,687]],
+      [[736,737],[748,728],[759,717],[769,705],[777,696],[777,709],[769,721],[758,731],[747,737]]
+    ],
+    "IMG_4528.HEIC": [
+      [[714,985],[714,1003],[718,1024],[715,1054],[719,1082],[720,1100],[727,1120],[733,1131],[728,1134],[720,1136],[713,1148],[702,1159],[691,1150],[684,1140],[684,1126],[688,1111],[699,1093],[704,1078],[700,1067],[697,1058],[698,1034],[700,1017],[708,997]]
+    ],
+    "IMG_4529.HEIC": []
+  },
+  "limitations": "Conservative human-reviewed texture masks, not pixel-accurate ground truth. Original inward-biased upper contours retained. Lower rim and uncertain gaps may use low-frequency appearance fill, visibly marked in source maps."
+}
