@@ -14,13 +14,23 @@ input snapshots, progress and cancellation, an orbit/pan/zoom viewer, and USDZ e
 Public datasets containing 59 original HEIC photos and 33 high-resolution JPEG photos
 have completed reconstruction and byte-preserving export with independently rendered
 textures. The HEIC set has also passed draft recovery, in-app reconstruction, saving,
-release-build reopening, and export. iPhone 16 Pro captures, HDR previews, and 24/48 MP
-resource limits still need acceptance testing. Camera pose recovery and photo-aligned
+release-build reopening, and export. Seven original 24.5 MP iPhone 16 Pro HEIC photos
+pass import, orientation, and persistence checks but fail during image alignment.
+Controlled format, depth, resolution, and sensitivity experiments did not resolve that
+failure. HDR display behavior and successful high-resolution resource baselines remain
+unverified. Camera pose recovery and photo-aligned
 comparison remain P1 work; offline pose and projection probes do not enable them in the app.
 
 The implementation plan and current evidence are maintained in
 [the v2 kickoff document](doc/Rebuild3D-项目启动文档-v2.md) and
 [the v2 acceptance record](doc/验收记录-v2-2026-10-08.md).
+
+The next exploration is defined in the
+[seven-photo statue goal](doc/GOAL-七张照片佛像重建探索.md): keep the same seven source
+photos, seek a usable coarse 3D result, and explicitly label inferred or completed
+geometry while checking it against all original views. This may require an alternative
+geometry backend; it is a research plan, not an implemented fallback. The existing
+workflow and diagnosis are preserved by the `v0.2.0-sparse-baseline` tag.
 
 ## Requirements
 
