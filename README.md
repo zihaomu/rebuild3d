@@ -22,7 +22,11 @@ A native macOS app for local, photo-textured 3D reconstruction — including an 
 
 ## 获取与使用
 
-**v0.1.0 当前发布源码、文档及真实截图，尚未提供可直接下载的完整应用安装包。** 源码包不是 `.app`；自行构建完整少图版本请按[构建指南](doc/开发与构建.md)准备固定版本的本地组件。完整离线组件约 6.22 GB，权重不包含在 Git 仓库中。
+**[下载 v0.1.0 Mac 应用](https://github.com/zihaomu/rebuild3d/releases/tag/v0.1.0)**。安装包包含 Python、运行依赖和少图模型权重，无需安装开发工具，可以在本机离线生成。
+
+在 Release 的 **Assets** 中下载 `Rebuild3D-0.1.0-macos-arm64.dmg` 和全部同名 `.dmgpart`，放在同一文件夹，保持原文件名。双击 `.dmg`，将 **Rebuild3D.app** 拖入 **Applications（应用程序）** 后打开；macOS 会自动读取其他分卷。GitHub 单附件大小有限，因此完整应用拆成多个文件；`Source code` 是源码，不是安装包。
+
+当前应用尚未完成 Apple 公证。如果首次打开被阻止，按[安装说明](doc/macOS-安装说明.md)在“系统设置 → 隐私与安全性”中允许打开。建议至少预留 20 GB 磁盘空间；首次生成需准备约 6.22 GB 本地组件。随包的 VGGT-1B 权重限非商业使用，许可见文末。
 
 本机验收使用 Apple M5、16 GiB 内存、macOS 26.4.1。项目要求 macOS 26 或更新版本；当前仅验证 Apple Silicon arm64 构建，Intel 和其他机器兼容性尚未验证。
 
