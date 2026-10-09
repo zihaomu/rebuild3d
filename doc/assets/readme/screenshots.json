@@ -1,0 +1,30 @@
+{
+  "capturedOn": "2026-10-09",
+  "screenshots": [
+    {
+      "file": "seven-photo-result.png",
+      "sourceEvidence": "build/v3-oneclick/ui-acceptance/sleep02-completed-full.png",
+      "sha256": "fd49dc565289605a8494bec22dd46092ffdf3957020d2368811007512f29b24a",
+      "type": "Unmodified actual application screenshot; not an AI-generated mockup"
+    },
+    {
+      "file": "second-statue-result.png",
+      "sourceEvidence": "build/v3-oneclick/ui-acceptance/A-completed.png",
+      "sha256": "69b5e403a1f26c0fb655b9003b794422e5eac04de77a36a380a2017bef81d53b",
+      "type": "Unmodified actual application screenshot; not an AI-generated mockup"
+    },
+    {
+      "file": "geometry-sources.png",
+      "sourceEvidence": "build/v3-oneclick/ui-acceptance/mixed09-reopened-geometry.png",
+      "sha256": "d89aec505e7376021e0047b79a5113f07bd2ff378ea5f3d1b2c1aa07ee141865",
+      "type": "Unmodified actual application screenshot; not an AI-generated mockup"
+    },
+    {
+      "file": "photo-color-sources.png",
+      "sourceEvidence": "build/v3-oneclick/ui-acceptance/mixed09-reopened-color.png",
+      "sha256": "fc11cb8b4e95f03139f8aefba0ea7ceca9eb181158f4c74f76d72c5c44149a19",
+      "type": "Unmodified actual application screenshot; not an AI-generated mockup"
+    }
+  ],
+  "notes": "A is packaged candidate03; B and provenance views use accepted candidate09. User-supplied statue photographs; approximate reconstruction and visible limitations retained."
+}

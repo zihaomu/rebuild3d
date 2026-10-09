@@ -1,186 +1,113 @@
 # Rebuild3D
 
-A native macOS app for reconstructing textured 3D models from photographs.
+**添加照片，点击生成，得到带真实照片贴图的三维模型。**
 
-Rebuild3D uses SwiftUI and RealityKit Object Capture. Reconstruction runs locally;
-input photographs are not uploaded. The initial implementation targets a single
-stationary, textured object and exports USDZ with embedded materials and textures.
+Rebuild3D 是原生 macOS 照片建模应用。照片较少时自动尝试近似重建，照片较充分时保留 Apple Object Capture 路线；主体提取、重建、贴图和保存由应用完成。照片和计算留在本机，生成结果可以旋转查看、保存为项目或导出 USDZ。
 
-## Status
+A native macOS app for local, photo-textured 3D reconstruction — including an automatic sparse-photo workflow with explicit geometry and color provenance.
 
-The v2 implementation includes direct photo import, recoverable drafts, content-based
-format detection, exact duplicate detection, versioned project migration, reconstruction
-input snapshots, progress and cancellation, an orbit/pan/zoom viewer, and USDZ export.
-Public datasets containing 59 original HEIC photos and 33 high-resolution JPEG photos
-have completed reconstruction and byte-preserving export with independently rendered
-textures. The HEIC set has also passed draft recovery, in-app reconstruction, saving,
-release-build reopening, and export. Seven original 24.5 MP iPhone 16 Pro HEIC photos
-pass import, orientation, and persistence checks but fail during image alignment.
-Controlled format, depth, resolution, and sensitivity experiments did not resolve that
-Object Capture failure. A separate local research pipeline now reconstructs that fixed
-seven-photo statue using VGGT predictions and silhouette-constrained depth fusion,
-with explicitly marked inferred and completed regions. HDR display behavior and successful high-resolution resource baselines remain
-unverified. Camera pose recovery and photo-aligned
-comparison remain P1 work; offline pose and projection probes do not enable them in the app.
+[v0.1.0 发布](https://github.com/zihaomu/rebuild3d/releases/tag/v0.1.0) · [使用说明](doc/v3-本地应用使用与交付说明.md) · [构建指南](doc/开发与构建.md) · [验收记录](doc/v3-一键生成执行与验收记录.md)
 
-The implementation plan and current evidence are maintained in
-[the v2 kickoff document](doc/Rebuild3D-项目启动文档-v2.md) and
-[the v2 acceptance record](doc/验收记录-v2-2026-10-08.md).
+![使用七张 HEIC 照片生成的带贴图佛像，右侧显示原照片](doc/assets/readme/seven-photo-result.png)
 
-The exploration is defined in the
-[seven-photo statue goal](doc/GOAL-七张照片佛像重建探索.md): keep the same seven source
-photos, seek a usable coarse 3D result, and explicitly label inferred or completed
-geometry while checking it against all original views. The research pipeline exports
-GLB, USDZ, per-face provenance, and seven-view comparisons. **Load Approximation**
-imports its result after checking exact original-photo hashes, and **Sources** shows
-inferred regions. This is a local research-result bridge; the regular **Reconstruct**
-button still uses Object Capture. VGGT and its weights are not bundled with the app.
-See the [execution record](doc/七张佛像-探索记录-2026-10-08.md) for commands and limitations. The existing
-workflow and diagnosis are preserved by the `v0.2.0-sparse-baseline` tag.
+*实际应用截图：7 张 iPhone HEIC 照片，一次点击自动生成。伞体、衣甲、飘带和岩石具有三维形状及照片颜色；面部、细杆和底座仍有可见的粗糙与缺失。截图保留实际效果，未做模型修饰。*
 
-## Requirements
+## v0.1.0 可以做什么
 
-- macOS 26 or later and a Mac supported by `PhotogrammetrySession.isSupported`.
-- Swift 6 or later with the macOS 26 SDK (Xcode or Command Line Tools).
-- Start with Recommended quality (the engine's reduced detail) on a 16 GB Mac.
-  Only one session runs at a time.
-- Full Xcode and a signing identity are needed for the later distribution workflow.
+- **一键生成**：自动准备本地组件、选择重建路线、识别主体、生成网格并铺设照片纹理，无需手工遮罩或选择主照片。
+- **看清结果来源**：分别查看推测几何、轮廓补全、照片取色和外观填充。贴上真实照片不意味着形状已经实测验证。
+- **可恢复的长任务**：展示当前阶段和已用时间，支持取消与有效阶段复用；生成失败保留原图和上次成功模型。
+- **完整项目与导出**：可恢复草稿、稳定照片身份、保存重开、带嵌入贴图的 USDZ；近似结果另附 GLB 和来源记录。
+- **照片导入**：按内容识别 HEIC/HEIF、JPEG、PNG 和单图 TIFF，处理方向与精确重复，逐张提示无法读取的文件。
 
-Verified development environment: Apple M5, 16 GB, macOS 26.4.1, Swift 6.3.1,
-macOS SDK 26.4, Command Line Tools. Runtime Object Capture support is available.
+## 获取与使用
 
-## Build and run
+**v0.1.0 当前发布源码、文档及真实截图，尚未提供可直接下载的完整应用安装包。** 源码包不是 `.app`；自行构建完整少图版本请按[构建指南](doc/开发与构建.md)准备固定版本的本地组件。完整离线组件约 6.22 GB，权重不包含在 Git 仓库中。
+
+本机验收使用 Apple M5、16 GiB 内存、macOS 26.4.1。项目要求 macOS 26 或更新版本；当前仅验证 Apple Silicon arm64 构建，Intel 和其他机器兼容性尚未验证。
+
+准备好包含组件的应用后：
+
+1. 打开应用，点击 **添加照片**，导入同一物体的一组照片。应用自动建立可恢复草稿。
+2. 点击右上角 **生成模型**，等待主体识别、重建和贴图完成。
+3. 拖动旋转，滚轮缩放，Shift 拖动平移；点击 **Reset View** 恢复视图。
+4. 在 **查看来源** 中检查推测区域和照片颜色来源。
+5. 点击 **Save** 保存项目；点击 **Export USDZ** 导出带贴图模型。
+
+生成成功会自动保存到当前项目或草稿。换图后旧模型会明确标为“上次结果，当前照片尚未生成”；取消或失败不会把旧结果当成本次成功。
+
+## 两套七图的实际结果
+
+两套照片分别导入、分别生成，均不依赖手工遮罩、指定贴图照片或旧模型。上图是持伞佛像，下图是另一套 7 张 HEIC 照片的结果。
+
+![另一套七张照片自动重建的持乐器佛像，包含照片纹理及原图对照](doc/assets/readme/second-statue-result.png)
+
+*衣甲花纹和乐器颜色来自输入照片。底座收口、薄部件和局部接缝仍不理想；自动结果未达到此前手工修订版本的细节质量。*
+
+## 哪些来自照片，哪些属于推测
+
+少图路线的**全部几何和相机位置都是估计结果**。来源视图帮助理解模型是如何形成的，不代表精度认证。
+
+| 推测几何 | 照片颜色来源 |
+| --- | --- |
+| ![橙色学习深度与紫色轮廓补全](doc/assets/readme/geometry-sources.png) | ![不同颜色对应不同原照片，灰色表示外观填充](doc/assets/readme/photo-color-sources.png) |
+| 橙色为学习深度形成的几何，紫色为轮廓约束补全。 | 彩色区域对应右侧列出的原照片，灰色为保守外观填充。 |
+
+这两张截图来自同一组混合 HEIC/JPEG 输入的同一模型视角。来源记录随项目保存；导出近似模型时，请同时保留同名 `.rebuild3d-result/` 文件夹。
+
+## 已经验证到哪一步
+
+v0.1.0 对应内部 v3 方案的本机 P0 实施成果。核心应用流程及 M0–M5 验收已完成；“v3”是方案迭代名称，不是本次发布版本号。
+
+| 验收项 | 结果 |
+| --- | --- |
+| 两套用户七图 | 实际应用内一键生成、照片贴图、来源查看、保存重开与移位导出通过 |
+| 常规重建 | 33 张 JPEG、59 张 HEIC 两套数据生成与导出通过，并与旧成功基线对照 |
+| 额外对象 | 冻结实现后，12 张公开头骨照片首次生成；未使用该对象调参 |
+| 混合输入 | 方向变化、重命名、中文与空格路径、同名不同内容、HEIC/JPEG 混合通过 |
+| 中断与恢复 | 取消、应用强制退出后恢复、真实磁盘不足及旧结果保护通过；内存失败使用故障注入验证有限重试 |
+| 系统睡眠 | UV 展开期间真实睡眠 6 分 28 秒，唤醒后同一任务自动完成并保存 |
+| 独立与离线 | 在系统禁止访问网络、仓库和开发工具的环境中生成；缺失组件可从应用包修复 |
+| 自动测试 | 40 项 Swift、7 项 Python 通过 |
+
+详细过程、输入来源、构建版本和质量限制见[执行与验收记录](doc/v3-一键生成执行与验收记录.md)。验收使用当前 macOS 账户的系统级隔离，并非另一台机器。完整原图、模型、运行日志和大体积组件保留在本地 `build/`，未包含在源码发布中；README 截图及其[来源清单](doc/assets/readme/screenshots.json)随仓库提供。
+
+## 输入与效果边界
+
+- 至少 3 张照片可以启动；3–12 张走近似路线。更多照片优先尝试常规路线，适用的计算失败可自动转入近似路线。按资源预算缩减输入时，会记录每张照片是否参与计算。
+- 核心验收覆盖两套七图，不保证任意 3 张或任意对象都能成功。清晰、重叠充分、覆盖正侧背面、光照稳定的照片更适合重建。
+- 面部、细杆、孔洞、遮挡区和未拍到的底部可能粗糙、断裂或被补全；贴图可能保留阴影、接缝和视角差异。比例不代表真实尺寸，不适合直接当作精密扫描。
+- 本机验收中两套七图的完整工作进程约 4 分钟和 12 分钟，12 图额外对象约 30 分钟。组件准备另计，时间随内容、机器负载和任务变化，不是性能承诺。
+- 应用退出后不承诺继续计算。少图任务再次生成时复用有效阶段，未完成阶段重做；Object Capture 中断后需要重新计算。
+- 当前为本地 ad-hoc 签名构建，未完成 Developer ID 签名、公证和跨机器分发验收。
+
+## 开发
+
+需要 macOS 26 SDK 和 Swift 6 工具链。先构建原生目标并运行测试：
 
 ```sh
+git clone https://github.com/zihaomu/rebuild3d.git
+cd rebuild3d
+git checkout v0.1.0
 swift build
-./scripts/build-app.sh
-open build/Rebuild3D.app
-```
-
-Open `Package.swift` in Xcode to edit the native Swift package. The packaging script
-creates an ad-hoc signed local application with its project document type and both
-license notices. It is not a notarized release. Use `./scripts/build-app.sh release`
-for an optimized local build. The currently verified package is arm64; Intel and
-other-machine execution have not been tested.
-
-```sh
 ./scripts/test.sh
-swift run rebuild3d-check doctor
-./scripts/check-upstream.sh
 ```
 
-The test script supplies Swift Testing framework/runtime paths when using Command
-Line Tools. Storage tests use generated image fixtures and opaque model payloads;
-they do not establish reconstruction quality or texture correctness.
-
-`scripts/probe-disk-full.swift` additionally exercises real out-of-space failures and
-retry behavior on a separately mounted, disposable filesystem of at most 128 MiB.
-It checks manifest/model preservation, draft publication, export replacement, and
-partial-copy cleanup. Build it with the core sources, as documented in the script;
-keep its report directory outside the scratch volume. This is a storage check,
-not a reconstruction-quality or UI test.
-
-## Reconstruct an object
-
-1. Choose **Add Photos** or drop a photo folder or multiple photos into the window.
-2. A recoverable draft is created automatically; no project location is required yet.
-3. Review import issues and remove unwanted photos from the list.
-4. Choose **Start Reconstruction** with the recommended settings. Optional quality
-   settings are in the collapsed **Reconstruction Options** section.
-5. Inspect the model: drag to orbit, scroll or pinch to zoom, Shift-drag or
-   right-drag to pan, and choose **Reset View** to frame the object.
-6. Save the project to a new location and use **Export USDZ** to copy the complete asset elsewhere.
-
-The **Recover Draft** menu lists locally retained drafts. Formal projects are never
-overwritten by a draft save. Use **File → Discard Draft** only when you intend to delete
-the draft's copied data; source files outside the project are not changed.
-
-You can also exercise the same import/storage/engine pipeline from the terminal:
-
-```sh
-swift run rebuild3d-check reconstruct /path/to/photos /path/to/Object.rebuild3d
-swift run rebuild3d-check rebuild /path/to/Object.rebuild3d
-swift run rebuild3d-check export /path/to/Object.rebuild3d /path/to/export.usdz
-```
-
-The destination must not already exist. This creates a self-contained project,
-runs reduced-quality reconstruction, and records a JSON report in `logs/`.
-The `rebuild` command uses a saved project's settings and can exercise cancellation
-with `--cancel-after 2`; intentional cancellation exits with code 130.
-
-Use sharp photographs with substantial overlap, diffuse light, and coverage at
-several heights. Roughly 80–150 photos around 12 MP are a starting experiment,
-not a requirement or performance guarantee. Reflective, transparent, featureless,
-moving, or deforming subjects are difficult. Folder import is nonrecursive and
-accepts JPEG, common HEIC/HEIF, PNG, and single-image TIFF based on decoded content.
-HEIF uses its primary image. RAW/DNG and animated or multipage non-HEIF inputs are
-unsupported; videos, auxiliary files, hidden files, and nested folders are ignored.
-An invalid file does not stop other valid inputs. Repeated source bytes are skipped,
-including after saving and reopening. Thumbnails and photo previews use a consistent
-color-managed SDR/sRGB policy. HEIC, JPEG, and PNG reconstruction inputs retain their
-original bytes. Single-image TIFF files get full-resolution, orientation-normalized
-SDR/sRGB PNG working copies because Object Capture's folder input omits TIFF files.
-Original TIFF files are retained, with the conversion, pixel transform, output size,
-and separate source/input digests recorded in the run snapshot.
-
-Before starting, the app explains missing inputs or unsupported hardware and checks
-the engine's current image-count and per-side pixel limits. Oversized photos are marked
-in the list and must be removed from the input selection; their project originals remain.
-Three photos are the minimum start condition, not a guarantee of a usable reconstruction.
-Run `rebuild3d-check doctor` to inspect the limits reported by the current Mac.
-
-## Project storage
+完整少图应用还需要固定版本的 CPython、依赖、VGGT 代码与权重，以及预编译辅助进程。配置、打包和运行时测试命令见[开发与构建](doc/开发与构建.md)。普通用户运行完整应用时无需安装这些开发工具。
 
 ```text
-Object.rebuild3d/
-  project.json        # Versioned metadata with relative paths
-  images/             # Copied originals, including embedded metadata
-  thumbnails/         # Regenerable thumbnails
-  models/             # Immutable successful USDZ results
-  runs/<run-id>/
-    inputs.json       # Immutable source identity, working-image recipe, pixel transform
-    research/         # Optional approximation bundle, source regions and hashed artifacts
-  logs/               # Run status, warnings, duration, memory observations, size
-  cache/              # Disposable active-run staging
+Sources/                 SwiftUI 界面、项目存储、生成调度及原生照片准备
+Runtime/                 通用少图工作进程、几何融合、UV、贴图及测试
+Tests/                   Swift 核心与运行组件测试
+scripts/v3/              完整应用打包、组件校验和验收工具
+doc/                     方案、阶段目标、验收记录和应用截图
+Vendor/                  保留的上游代码及来源说明
 ```
 
-Drafts live in `~/Library/Application Support/org.rebuild3d.app/Drafts/`. Successful
-draft imports and settings changes are saved for recovery. Saving a draft copies it
-to a staging package, validates it, publishes the destination, and then removes the
-recovery copy. Cancellation or failure during saving preserves the draft.
-For an existing formal project, Save commits input and settings changes.
-Reconstruction saves current inputs first and commits a successful model automatically.
-Move the complete package to relocate it; saved models reopen without reconstruction.
+## 许可与致谢
 
-The current storage format is 3. Formats 1 and 2 migrate in memory when opened;
-their manifest is upgraded atomically on a successful save. Existing photo IDs and
-models are retained. Legacy models do not receive invented run or camera records.
-Older apps reject format 3 instead of silently displaying an approximation without
-its source labels. Approximate exports include a same-stem `.rebuild3d-result` folder
-containing the source-region USDZ and complete research records. Keep this folder with
-the ordinary USDZ. Choose a new name if that companion folder already exists; it is
-never silently replaced.
+Rebuild3D 仓库采用 [Apache-2.0](LICENSE)。基于 [ekarad1um/Photogrammetry](https://github.com/ekarad1um/Photogrammetry) 的部分保留 [MIT 许可](Vendor/Photogrammetry/LICENSE)；固定版本和来源见 [Vendor/UPSTREAM.md](Vendor/UPSTREAM.md)。Apple Object Capture 是系统框架。
 
-New results become active only after an atomic manifest update. Cancellation or
-failure preserves the previous model. Failed photo and model copies are cleaned up,
-including copies that run out of disk space. Removed photos and superseded models are
-retained for now; automatic garbage collection and reconstruction checkpoint resumption
-are not implemented. Recovery covers data already persisted in a draft, not an
-unfinished import or reconstruction. Do not edit the same project concurrently from multiple processes.
-If a newly reconstructed model cannot be saved, check free disk space and the project's
-write permissions, then retry reconstruction. Diagnostics and the run log retain the
-underlying error; the previously saved model remains available.
-Run memory metrics sample the application's resident memory, not total system or
-all framework helper-process memory. The cache is disposable only when no run is active.
+少图流程使用 [Meta VGGT](https://github.com/facebookresearch/vggt)。固定代码版本的 [VGGT License](https://github.com/facebookresearch/vggt/blob/a288dd0f14786c93483e45524328726ab7b1b4ce/LICENSE.txt)与 [VGGT-1B 权重模型卡](https://huggingface.co/facebook/VGGT-1B/blob/860abec7937da0a4c03c41d3c269c366e82abdf9/README.md)分别适用；权重标注 **CC BY-NC 4.0**，不能将仓库的 Apache-2.0 许可理解为对这些权重的商业授权。
 
-## Upstream and licensing
-
-Based on [ekarad1um/Photogrammetry](https://github.com/ekarad1um/Photogrammetry),
-pinned to commit `43c66741e3f912ddd29292858d6f6bc01441606e`.
-The original source and Xcode project are preserved in `Vendor/Photogrammetry`.
-See [upstream provenance](Vendor/UPSTREAM.md).
-
-Rebuild3D's repository license is [Apache-2.0](LICENSE). Upstream and derived
-portions retain [MIT, copyright (c) 2022 ekarad1um](Vendor/Photogrammetry/LICENSE).
-Apple's Object Capture engine is a system framework, not an open-source component
-of this repository.
+额外对象测试使用 alansartlog 的 [Skull Turntable — Strong Lights — White Background](https://gitlab.com/photogrammetry-test-sets/skull-turntable-strong-lights-white-background)，按其 CC BY 4.0 声明记录来源。运行组件保留各自的许可文件，详见[本地应用使用与交付说明](doc/v3-本地应用使用与交付说明.md)。

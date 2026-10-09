@@ -18,8 +18,8 @@ struct ContentView: View {
             HStack {
                 Text(model.status).lineLimit(2)
                 Spacer()
-                Text("\(model.project?.manifest.photos.count ?? 0) photos")
-                if model.isDraft { Text("Recoverable draft").foregroundStyle(.secondary) }
+                Text("\(model.project?.manifest.photos.count ?? 0) 张照片")
+                if model.isDraft { Text("可恢复草稿").foregroundStyle(.secondary) }
                 if model.isDirty { Text("Unsaved changes").foregroundStyle(.orange) }
                 if !model.diagnostics.isEmpty {
                     Button("Diagnostics") { showInspector = true; showDiagnostics = true }
@@ -33,11 +33,8 @@ struct ContentView: View {
             ToolbarItemGroup(placement: .navigation) {
                 Button(action: model.newProject) { Label("New", systemImage: "doc.badge.plus") }.disabled(model.isBusy)
                 Button(action: model.openProject) { Label("Open", systemImage: "folder") }.disabled(model.isBusy)
-                Button(action: model.choosePhotos) { Label("Add Photos", systemImage: "photo.badge.plus") }
+                Button(action: model.choosePhotos) { Label("添加照片", systemImage: "photo.badge.plus") }
                     .disabled(model.isBusy)
-                Button(action: model.loadApproximateResult) { Label("Load Approximation", systemImage: "cube.box") }
-                    .disabled(model.isBusy || (model.project?.manifest.photos.isEmpty ?? true))
-                    .help("Load a research result and verify it belongs to these original photos.")
                 if !model.recoverableDrafts.isEmpty {
                     Menu {
                         ForEach(model.recoverableDrafts) { draft in
@@ -45,18 +42,22 @@ struct ContentView: View {
                                 model.openProject(at: draft.directory)
                             }
                         }
-                    } label: { Label("Recover Draft", systemImage: "clock.arrow.circlepath") }
+                    } label: { Label("恢复草稿", systemImage: "clock.arrow.circlepath") }
                     .disabled(model.isBusy)
                 }
             }
             ToolbarItemGroup(placement: .primaryAction) {
-                if model.isReconstructing {
-                    Button("Cancel", action: model.cancel).disabled(model.isCancelling)
-                } else {
-                    Button(action: model.reconstruct) { Label("Reconstruct", systemImage: "cube.transparent") }
-                        .buttonStyle(.borderedProminent).disabled(!model.canReconstruct)
-                        .help(model.inputCheck.blockingReason ?? "Reconstruct with the current photos and settings.")
+                Button {
+                    if model.isReconstructing { model.cancel() } else { model.reconstruct() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: model.isReconstructing ? "stop.circle" : "cube.transparent")
+                        Text(model.isReconstructing ? "取消" : "生成模型")
+                    }
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(model.isReconstructing ? model.isCancelling : !model.canReconstruct)
+                .help(model.isReconstructing ? "取消并保留有效进度。" : model.inputCheck.blockingReason ?? "自动准备组件、生成主体、铺设照片纹理并保存。")
                 Button(action: model.save) { Label("Save", systemImage: "square.and.arrow.down") }
                     .disabled(model.project == nil || model.isBusy)
                 Button(action: model.exportModel) { Label("Export USDZ", systemImage: "square.and.arrow.up") }
@@ -122,37 +123,46 @@ struct ContentView: View {
                         if model.project?.manifest.model?.approximation != nil {
                             Text("Approximate").font(.caption.bold()).foregroundStyle(.orange)
                                 .padding(8).background(.regularMaterial, in: Capsule())
-                            Toggle("Sources", isOn: $model.showProvenance).toggleStyle(.button)
-                                .help("Orange: learned inference. Purple: silhouette completion. Neither is measured geometry.")
+                            Picker("查看来源", selection: $model.appearance) {
+                                Text(ModelAppearance.photos.rawValue).tag(ModelAppearance.photos)
+                                Text(ModelAppearance.geometry.rawValue).tag(ModelAppearance.geometry)
+                                if model.project?.textureSourcesModelURL != nil {
+                                    Text(ModelAppearance.texture.rawValue).tag(ModelAppearance.texture)
+                                }
+                            }.pickerStyle(.menu).fixedSize().padding(8)
+                                .background(.regularMaterial, in: Capsule())
                         }
                         Spacer()
                         Button("Reset View", systemImage: "arrow.counterclockwise") { model.resetViewID = UUID() }
                             .buttonStyle(.bordered).background(.regularMaterial, in: Capsule())
                     }
+                    if model.project?.modelIsOutdated == true {
+                        Label("上次结果，当前照片尚未生成", systemImage: "clock.arrow.circlepath")
+                            .font(.callout.bold()).foregroundStyle(.orange)
+                            .padding(10).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                    }
                     Spacer()
                     if model.project?.manifest.model?.approximation != nil {
-                        Text(model.showProvenance
-                             ? "Orange: learned depth · Purple: silhouette completion · All geometry is inferred"
-                             : "Approximate geometry · Relative scale · View Sources for inferred regions")
-                            .font(.caption).padding(8).background(.regularMaterial, in: Capsule())
+                        Text(model.sourceDescription).multilineTextAlignment(.center)
+                            .font(.caption).padding(8).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                     }
                     Text("Drag to orbit · Scroll to zoom · Shift-drag to pan")
                         .font(.caption).padding(8).background(.regularMaterial, in: Capsule())
                 }.padding()
-            } else {
+            } else if !model.isBusy {
                 ContentUnavailableView {
-                    Label("Reconstruct a 3D Object", systemImage: "cube.transparent")
+                    Label("从照片生成三维模型", systemImage: "cube.transparent")
                 } description: {
                     Text((model.project?.manifest.photos.isEmpty ?? true)
-                         ? "Photograph the same object from different angles, then add the photos here."
-                         : model.inputCheck.blockingReason ?? "Ready to try reconstruction with the recommended settings.")
+                         ? "添加同一物体不同角度的照片，再点击生成模型。"
+                         : model.inputCheck.blockingReason ?? "已准备好。生成会自动处理主体和贴图，可能需要较长时间。")
                 } actions: {
                     if model.project?.manifest.photos.isEmpty ?? true {
-                        Button("Add Photos…", action: model.choosePhotos).buttonStyle(.borderedProminent).disabled(model.isBusy)
+                        Button("添加照片…", action: model.choosePhotos).buttonStyle(.borderedProminent).disabled(model.isBusy)
                     } else {
-                        Button("Start Reconstruction", action: model.reconstruct).buttonStyle(.borderedProminent).disabled(!model.canReconstruct)
+                        Button("生成模型", action: model.reconstruct).buttonStyle(.borderedProminent).disabled(!model.canReconstruct)
                         if model.inputCheck.blockingReason != nil {
-                            Button("Add Photos…", action: model.choosePhotos).disabled(model.isBusy)
+                            Button("添加照片…", action: model.choosePhotos).disabled(model.isBusy)
                         }
                     }
                 }
@@ -164,6 +174,15 @@ struct ContentView: View {
                         Text(progress, format: .percent.precision(.fractionLength(0)))
                     } else { ProgressView() }
                     Text(model.status).font(.callout).multilineTextAlignment(.center)
+                    if model.isReconstructing, let started = model.generationStartedAt {
+                        TimelineView(.periodic(from: started, by: 1)) { context in
+                            let seconds = max(0, Int(context.date.timeIntervalSince(started)))
+                            Text("已用时 \(seconds / 60) 分 \(seconds % 60) 秒")
+                                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        }
+                        Text("可以取消，稍后从已完成阶段继续。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
                 .padding(24).frame(maxWidth: 360).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
             }
@@ -173,15 +192,20 @@ struct ContentView: View {
     private var inspector: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                DisclosureGroup("Reconstruction Options") {
+                DisclosureGroup("高级选项") {
                     Picker("Quality", selection: Binding(get: { model.project?.manifest.settings.quality ?? .reduced }, set: { model.setQuality($0) })) {
                         ForEach(ReconstructionQuality.allCases, id: \.self) { quality in
                             Text(quality == .reduced ? "Recommended" : "More Detail").tag(quality)
                         }
                     }.disabled(model.project == nil || model.isBusy)
+                    Text("少量照片使用自动设置；质量选项适用于常规重建。")
+                        .font(.caption).foregroundStyle(.secondary)
                     Toggle("Isolate object from background", isOn: Binding(get: { model.project?.manifest.settings.objectMasking ?? true }, set: { model.setMasking($0) }))
                         .disabled(model.project == nil || model.isBusy)
                     Text("More detail may use more memory and take longer.").font(.caption).foregroundStyle(.secondary)
+                    Button("导入已有研究结果…", action: model.loadApproximateResult)
+                        .disabled(model.isBusy || (model.project?.manifest.photos.isEmpty ?? true))
+                    Button("查看本地组件许可…", action: model.showComponentNotices)
                 }
                 DisclosureGroup("Photo Tips") {
                     Text("Use a stationary, textured object in even light. Keep the same lens and zoom. Move around the object at different heights, keeping most of each photo in common with its neighbors. Add the HEIC or JPEG files directly.")
@@ -193,10 +217,20 @@ struct ContentView: View {
                         .font(.callout).foregroundStyle(.orange)
                 }
                 if model.project?.modelIsOutdated == true {
-                    Label("The saved model uses earlier inputs or settings. Reconstruct to update it.", systemImage: "info.circle")
+                    Label("上次结果，当前照片尚未生成。点击生成模型以更新。", systemImage: "info.circle")
                         .font(.caption).foregroundStyle(.orange)
                 }
                 Divider()
+                if model.appearance == .texture, !model.sourceLegend.isEmpty {
+                    Text("颜色来源").font(.headline)
+                    ForEach(model.sourceLegend) { item in
+                        HStack {
+                            Circle().fill(Color(red: item.rgb[0] / 255, green: item.rgb[1] / 255, blue: item.rgb[2] / 255))
+                                .frame(width: 12, height: 12)
+                            Text(item.code == 0 ? "外观填充（推测）" : item.meaning).font(.caption)
+                        }
+                    }
+                }
                 if let photo = model.selectedPhoto, let project = model.project {
                     Text("Original Photo").font(.headline)
                     PhotoPreview(url: project.directory.appendingPathComponent(photo.imagePath), maxPixelSize: 1200)

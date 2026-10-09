@@ -1,0 +1,141 @@
+{
+  "manifest_version": 1,
+  "recorded_date": "2026-10-09",
+  "status": "inputs_registered_not_reconstructed",
+  "path_base": "repository_root",
+  "hash_algorithm": "SHA-256",
+  "notes": [
+    "源目录由用户指定；本清单不复制、修改或转换原图。",
+    "像素尺寸来自 sips，表示编码尺寸，不代表应用 EXIF 方向后的显示尺寸。",
+    "开始重建前重新核对摘要；文件变化必须记录为新的输入版本，不能沿用旧结果或验收。",
+    "A/B 是开发及核心验收数据，不能同时作为 D 集的未参与调参验证样本。"
+  ],
+  "sets": [
+    {
+      "id": "A",
+      "source_directory": "../data",
+      "role": "旧七图自动化回归",
+      "required": true,
+      "file_count": 7,
+      "total_bytes": 24799542,
+      "files": [
+        {
+          "filename": "IMG_4523.HEIC",
+          "byte_count": 4292122,
+          "sha256": "6c5e09bca0ba9285020a224288d7035e11335c8da5a5f8aa4cb355ce998bd2be",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4524.HEIC",
+          "byte_count": 3333260,
+          "sha256": "f3b95cc32b34a27a939e7fbb428cd036112e105a34c03de9a52103b3e2bdb17f",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4525.HEIC",
+          "byte_count": 3162488,
+          "sha256": "1029c35d3f66ea1f1ae99a48701e9fd0357ce5db321965867ff560090b7a3649",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4526.HEIC",
+          "byte_count": 3283406,
+          "sha256": "798edd3f45a8d1142a59b6254f859dddc1e53558c61d9f76ff3e03df438137d5",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4527.HEIC",
+          "byte_count": 3821590,
+          "sha256": "3ac89c78d6afed0b1e14494755821758d17f55431c25b067088f05919b3bc5ed",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4528.HEIC",
+          "byte_count": 3106955,
+          "sha256": "9e43a26bd714b24156e752904ea26040cdfa17640fcb23e652dd73dc0fcd5c15",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4529.HEIC",
+          "byte_count": 3799721,
+          "sha256": "59b027187238f3f67666385e81882e7cd31204b9cb4d12c39515e6918512fdb8",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "source_directory": "../data2",
+      "role": "新七图零人工生成，M1 优先验证",
+      "required": true,
+      "file_count": 7,
+      "total_bytes": 26035649,
+      "files": [
+        {
+          "filename": "IMG_4503.HEIC",
+          "byte_count": 5418472,
+          "sha256": "eb20194622df99978cbbe80ad42bbf6d021e1b97307ba44cf5204e08882a9675",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4504.HEIC",
+          "byte_count": 3051256,
+          "sha256": "5a095d8c62ea4fe17d110ff06e72219fdb682d9ff5f0f71842634ad578bf0ced",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4505.HEIC",
+          "byte_count": 2971395,
+          "sha256": "38eddb3bf31ba2d25765f093dc45312c7d0b5a70fd1230bbbcaee20d9aebf5fd",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4506.HEIC",
+          "byte_count": 4329052,
+          "sha256": "e3fd4f7c093b1cea1c2f9e5e50a547df61ed91b428cd84905944d484a19524d9",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4507.HEIC",
+          "byte_count": 3431735,
+          "sha256": "39cf2b836c5eb5a1210adc702d67ac9cd4db97b72ece6d10e1477e70cafa903b",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4508.HEIC",
+          "byte_count": 3517426,
+          "sha256": "f3f1e72c38102ff59ccbc911c969a2c66f0b045219d68b4a3ab00a789103dd60",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        },
+        {
+          "filename": "IMG_4509.HEIC",
+          "byte_count": 3316313,
+          "sha256": "85c2658217952026405123583535a38fbc20cc6131d3ae93bdf27ae09071ffdf",
+          "encoded_pixel_width": 5712,
+          "encoded_pixel_height": 4284
+        }
+      ],
+      "historical_input_verification": {
+        "project_directory": "build/seven-photo-statue-stage2/ui-acceptance/Statue-texture-stage2.rebuild3d",
+        "original_names_match": true,
+        "recorded_sha256_match": true,
+        "stored_file_sha256_match": true,
+        "matched_file_count": 7,
+        "note": "历史项目仅用于身份核对；实际测试直接读取 source_directory。"
+      }
+    }
+  ]
+}

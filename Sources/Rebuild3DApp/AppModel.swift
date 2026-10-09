@@ -3,6 +3,18 @@ import Observation
 import Rebuild3DCore
 import UniformTypeIdentifiers
 
+enum ModelAppearance: String, CaseIterable {
+    case photos = "照片颜色", geometry = "推测几何", texture = "颜色来源"
+}
+
+struct TextureSourceLegend: Decodable, Identifiable {
+    let code: Int
+    let rgb: [Double]
+    let photoID: UUID?
+    let meaning: String
+    var id: Int { code }
+}
+
 @MainActor @Observable
 final class AppModel {
     var project: Project?
@@ -12,21 +24,36 @@ final class AppModel {
     var isCancelling = false
     var isDirty = false
     var progress: Double?
-    var status = "Add photos of the same object from different angles."
+    var status = "添加同一物体不同角度的照片，然后点击生成模型。"
     var errorMessage: String?
     var importIssues: [ImportIssue] = []
     var resetViewID = UUID()
-    var showProvenance = false
+    var appearance = ModelAppearance.photos
+    var generationStartedAt: Date?
+    var sourceLegend: [TextureSourceLegend] = []
     var diagnostics: [String] = []
     var recoverableDrafts: [DraftSummary] = []
     let drafts = DraftProjectStore()
-    let engine = ReconstructionEngine()
+    let engine = GenerationCoordinator()
 
     var selectedPhoto: PhotoRecord? { project?.manifest.photos.first { $0.id == selectedPhotoID } }
-    var inputCheck: ReconstructionInputCheck { ReconstructionEngine.checkInput(project?.manifest.photos ?? []) }
+    var inputCheck: ReconstructionInputCheck { GenerationCoordinator.checkInput(project?.manifest.photos ?? []) }
     var canReconstruct: Bool { !isBusy && inputCheck.blockingReason == nil }
     var isDraft: Bool { project.map { drafts.contains($0.directory) } ?? false }
-    var displayedModelURL: URL? { showProvenance ? project?.provenanceModelURL ?? project?.modelURL : project?.modelURL }
+    var displayedModelURL: URL? {
+        switch appearance {
+        case .photos: project?.modelURL
+        case .geometry: project?.provenanceModelURL ?? project?.modelURL
+        case .texture: project?.textureSourcesModelURL ?? project?.modelURL
+        }
+    }
+    var sourceDescription: String {
+        switch appearance {
+        case .photos: "形状为推测，颜色来自照片；不可见区域采用保守填充。比例不代表真实尺寸。"
+        case .geometry: "橙色：深度推测 · 紫色：轮廓补全。所有几何均为推测，并非实测。"
+        case .texture: "彩色区域来自不同原照片；灰色为外观填充。照片颜色不代表几何已获实测验证。"
+        }
+    }
 
     func refreshDrafts() {
         let store = drafts
@@ -41,13 +68,14 @@ final class AppModel {
     func newProject() {
         guard !isBusy, confirmLeavingProject() else { return }
         project = nil
-        showProvenance = false
+        appearance = .photos
+        sourceLegend = []
         selectedPhotoID = nil
         importIssues = []
         diagnostics = []
         isDirty = false
         progress = nil
-        status = "Add photos of the same object from different angles."
+        status = "添加同一物体不同角度的照片，然后点击生成模型。"
         refreshDrafts()
     }
 
@@ -83,16 +111,28 @@ final class AppModel {
 
     private func install(_ project: Project) {
         self.project = project
-        showProvenance = false
+        appearance = .photos
+        refreshSourceLegend()
         selectedPhotoID = project.manifest.photos.first?.id
         importIssues = []
         isDirty = project.needsMigrationSave
         progress = nil
         diagnostics = []
-        status = project.modelURL == nil ? "Add photos, then start reconstruction with the recommended settings." : "Saved model restored."
-        if project.manifest.model?.approximation != nil { status = "Approximate model restored with its inferred-region records." }
-        if isDraft { status += " Draft recovered." }
+        status = project.modelURL == nil ? "点击生成模型。中断过的任务会从有效阶段继续。" : "已恢复保存的模型。"
+        if project.manifest.model?.approximation != nil { status = "已恢复近似模型，可查看推测区域和颜色来源。" }
+        if project.modelIsOutdated { status = "上次结果，当前照片尚未生成。" }
+        if isDraft { status += " 草稿已恢复。" }
         refreshDrafts()
+    }
+
+    private func refreshSourceLegend() {
+        struct Sources: Decodable { let sourceDisplayColors: [TextureSourceLegend] }
+        sourceLegend = []
+        guard let project, let reference = project.manifest.model?.approximation,
+              let bundle = try? ProjectStore.resolve(reference.bundlePath, in: project.directory),
+              let url = try? ProjectStore.resolve("texture-provenance.json", in: bundle.deletingLastPathComponent()),
+              let data = try? Data(contentsOf: url), let sources = try? JSONDecoder().decode(Sources.self, from: data) else { return }
+        sourceLegend = sources.sourceDisplayColors.filter { $0.rgb.count == 3 }
     }
 
     func choosePhotos() {
@@ -104,6 +144,14 @@ final class AppModel {
         panel.allowsMultipleSelection = true
         guard panel.runModal() == .OK else { return }
         importPhotos(panel.urls)
+    }
+
+    func showComponentNotices() {
+        guard let url = Bundle.main.resourceURL?.appendingPathComponent("GenerationRuntime/NOTICE.md"),
+              FileManager.default.fileExists(atPath: url.path) else {
+            errorMessage = "此应用包未包含生成组件的许可文件。"; return
+        }
+        NSWorkspace.shared.open(url)
     }
 
     func loadApproximateResult() {
@@ -246,7 +294,8 @@ final class AppModel {
         isCancelling = false
         progress = nil
         diagnostics = []
-        status = "Preparing reconstruction…"
+        generationStartedAt = Date()
+        status = "正在准备生成模型…"
         perform {
             defer { self.isReconstructing = false; self.isCancelling = false }
             try await Task.detached { try ProjectStore.save(project) }.value
@@ -256,9 +305,11 @@ final class AppModel {
                 await self.receive(event)
             }
             self.project = updated
-            self.showProvenance = false
+            self.appearance = .photos
+            self.refreshSourceLegend()
             self.progress = 1
-            self.status = "Textured model saved. Inspect the result and export USDZ."
+            self.status = "本次模型已生成并保存，可查看或导出。"
+            self.resetViewID = UUID()
         }
     }
 
@@ -277,7 +328,7 @@ final class AppModel {
     func cancel() {
         guard isReconstructing, !isCancelling else { return }
         isCancelling = true
-        status = "Cancelling reconstruction…"
+        status = "正在停止生成并保存有效进度…"
         Task { await engine.cancel() }
     }
 
@@ -286,8 +337,9 @@ final class AppModel {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "\(project.manifest.name).usdz"
         panel.allowedContentTypes = [.usdz]
+        if project.modelIsOutdated { panel.message = "导出上次已保存的模型。当前照片尚未生成，导出不会包含本次输入修改。" }
         if project.manifest.model?.approximation != nil {
-            panel.message = "Exports the USDZ and a companion .rebuild3d-result folder containing source regions, original-photo identities and research records."
+            panel.message = (project.modelIsOutdated ? "导出上次结果，当前照片尚未生成。\n" : "") + "同时导出 USDZ 和来源附件目录，保留照片身份、推测区域和颜色来源。"
         }
         guard panel.runModal() == .OK, let destination = panel.url else { return }
         perform {
@@ -333,10 +385,10 @@ final class AppModel {
         Task {
             defer { isBusy = false }
             do { try await action() }
-            catch is CancellationError { status = "Reconstruction cancelled. Any previously saved model is preserved." }
+            catch is CancellationError { status = "已取消生成，照片和上次结果已保留。再次点击生成可从有效阶段继续。" }
             catch {
                 errorMessage = error.localizedDescription
-                status = "Operation failed. Review the error and retry."
+                status = "本次操作未完成，照片和已保存结果已保留。"
             }
         }
     }

@@ -65,6 +65,49 @@ private final class Fixture {
     }
 }
 
+// Fault injection tests the real coordinator/process boundary, not reconstruction quality.
+@Test(arguments: [true, false])
+func automaticRetriesAreBoundedAndNeverReplaceSavedResults(memoryFailure: Bool) async throws {
+    let fixture = try Fixture()
+    var project = try fixture.project()
+    let inputs = try [1, 3, 6].map { try fixture.image("photo-\($0).jpg", orientation: $0) }
+    project.manifest.photos = try PhotoImporter.importPhotos(from: inputs, into: project.directory).photos
+    project = try ProjectStore.commitModel(from: fixture.model("previous.usdz", content: "previous model fixture"), to: project)
+    let before = try Data(contentsOf: project.directory.appendingPathComponent("project.json"))
+    let oldModel = try Data(contentsOf: project.modelURL!)
+    let seed = fixture.root.appendingPathComponent("seed")
+    let reason = memoryFailure ? "Stage inference exceeded the task memory budget" : "No space left on device"
+    let script = """
+    #!/bin/sh
+    printf '%s\\n' '{"status":"failed","message":"\(reason)"}' > "$4/state.json"
+    printf '%s\\n' '{"protocolVersion":1,"event":"failed","stage":"inference","message":"\(reason)"}'
+    exit 2
+    """
+    let paths = ["python/bin/python3.12", "rebuild3d-native-worker", "worker/rebuild3d_worker/worker.py",
+                 "worker/rebuild3d_worker/raster.dylib", "vggt/source-manifest.json", "models/vggt-1b.safetensors"]
+    let artifacts = try paths.map { path in
+        let url = seed.appendingPathComponent(path)
+        let bytes = Data((path == paths[0] ? script : "explicit fake component").utf8)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try bytes.write(to: url)
+        if path == paths[0] { try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path) }
+        return RuntimeArtifact(path: path, byteCount: bytes.count, sha256: GenerationRuntime.digest(bytes))
+    }
+    try JSONEncoder().encode(RuntimeManifest(formatVersion: 1, platform: "macos-arm64", artifacts: artifacts))
+        .write(to: seed.appendingPathComponent("runtime.json"))
+    let coordinator = GenerationCoordinator(runtimeSeed: seed, runtimeStorage: fixture.root.appendingPathComponent("runtime"))
+    await #expect(throws: ProjectError.self) {
+        _ = try await coordinator.run(project: project, onEvent: { _ in })
+    }
+    let attempts = try FileManager.default.contentsOfDirectory(at: project.directory.appendingPathComponent("generation"), includingPropertiesForKeys: nil)
+    let sizes = try attempts.map {
+        try JSONDecoder().decode(SparseTask.self, from: Data(contentsOf: $0.appendingPathComponent("request.json"))).parameters.modelSize
+    }.sorted()
+    #expect(sizes == (memoryFailure ? [392, 518] : [518]))
+    #expect(try Data(contentsOf: project.directory.appendingPathComponent("project.json")) == before)
+    #expect(try Data(contentsOf: project.modelURL!) == oldModel)
+}
+
 @Test func approximationSurvivesProjectMoveWithPhotoIdentityAndSources() throws {
     let fixture = try Fixture()
     let original = try fixture.importedProject()

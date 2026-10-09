@@ -73,8 +73,11 @@ import Foundation
         // Opaque payloads exercise storage only, not model validity or reconstruction quality.
         let oldModel = output.appendingPathComponent("old-model.usdz")
         let newModel = output.appendingPathComponent("new-model.usdz")
+        let component = output.appendingPathComponent("component-source")
+        let partial = volume.appendingPathComponent("component.partial")
         try Data(repeating: 0x11, count: 64 * 1024).write(to: oldModel)
         try Data(repeating: 0x22, count: 1024 * 1024).write(to: newModel)
+        try Data(repeating: 0x33, count: 2 * 1024 * 1024).write(to: component)
         var project = try ProjectStore.create(at: volume.appendingPathComponent("Existing.rebuild3d"))
         project.manifest.photos = try PhotoImporter.importPhotos(from: [photos[0]], into: project.directory).photos
         project = try ProjectStore.commitModel(from: oldModel, to: project)
@@ -117,6 +120,9 @@ import Foundation
         try expectDiskFull("commit model") { _ = try ProjectStore.commitModel(from: newModel, to: project) }
         try expectDiskFull("replace export") { try ProjectStore.exportModel(draft, to: exportURL) }
         try expectDiskFull("publish draft") { _ = try drafts.saveAs(draft, to: publishedURL) }
+        try expectDiskFull("prepare generation component") {
+            try GenerationRuntime.copyResuming(component, to: partial, expectedSize: 2 * 1024 * 1024, cancellation: .init())
+        }
         let rejectedImport = try PhotoImporter.importPhotos(from: [photos[1]], into: project.directory)
         try require(rejectedImport.photos.isEmpty && rejectedImport.issues.count == 1,
                     "The full-disk import must not add a partial photo.")
@@ -144,6 +150,9 @@ import Foundation
 
         // Releasing only our filler must allow the very same operations to recover.
         try fm.removeItem(at: filler)
+        try GenerationRuntime.copyResuming(component, to: partial, expectedSize: 2 * 1024 * 1024, cancellation: .init())
+        try require(try Data(contentsOf: component) == Data(contentsOf: partial),
+                    "Component copy did not resume correctly after space was freed.")
         try ProjectStore.save(changed)
         let committed = try ProjectStore.commitModel(from: newModel, to: changed)
         try ProjectStore.exportModel(committed, to: exportURL)

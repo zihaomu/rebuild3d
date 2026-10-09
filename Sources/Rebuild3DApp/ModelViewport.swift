@@ -29,6 +29,7 @@ final class OrbitModelView: ARView {
     private var yaw: Float = 0
     private var pitch: Float = 0.15
     private var lastDragLocation: NSPoint?
+    private let loadingLabel = NSTextField(labelWithString: "正在加载模型…")
     var resetID = UUID()
 
     required init(frame: NSRect) {
@@ -39,6 +40,17 @@ final class OrbitModelView: ARView {
         anchor.addChild(camera)
         scene.anchors.append(anchor)
         scene.anchors.append(modelAnchor)
+        loadingLabel.drawsBackground = true
+        loadingLabel.backgroundColor = .windowBackgroundColor
+        loadingLabel.alignment = .center
+        loadingLabel.isHidden = true
+        loadingLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(loadingLabel)
+        NSLayoutConstraint.activate([
+            loadingLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            loadingLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            loadingLabel.widthAnchor.constraint(equalToConstant: 160)
+        ])
         updateCamera()
     }
 
@@ -49,12 +61,16 @@ final class OrbitModelView: ARView {
         guard loadedURL != url else { return }
         loadedURL = url
         loadTask?.cancel()
+        // Clear the previous source rendering before the new mode's label is shown.
+        modelAnchor.children.removeAll()
+        loadingLabel.isHidden = false
         loadTask = Task {
             do {
                 let entity = try await Entity(contentsOf: url)
                 guard !Task.isCancelled else { return }
                 modelAnchor.children.removeAll()
                 modelAnchor.addChild(entity)
+                loadingLabel.isHidden = true
                 let bounds = entity.visualBounds(relativeTo: nil)
                 center = bounds.center
                 radius = max(bounds.boundingRadius, 0.001)
@@ -62,7 +78,8 @@ final class OrbitModelView: ARView {
                 resetCamera()
             } catch {
                 guard !Task.isCancelled else { return }
-                onError("The model could not be displayed: \(error.localizedDescription)")
+                loadingLabel.isHidden = true
+                onError("模型无法显示：\(error.localizedDescription)")
             }
         }
     }

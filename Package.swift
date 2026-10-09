@@ -6,12 +6,14 @@ let package = Package(
     platforms: [.macOS("26.0")],
     products: [
         .executable(name: "Rebuild3D", targets: ["Rebuild3DApp"]),
-        .executable(name: "rebuild3d-check", targets: ["Rebuild3DCheck"])
+        .executable(name: "rebuild3d-check", targets: ["Rebuild3DCheck"]),
+        .executable(name: "rebuild3d-native-worker", targets: ["Rebuild3DNativeWorker"])
     ],
     targets: [
         .target(name: "Rebuild3DCore"),
         .executableTarget(name: "Rebuild3DApp", dependencies: ["Rebuild3DCore"]),
         .executableTarget(name: "Rebuild3DCheck", dependencies: ["Rebuild3DCore"]),
+        .executableTarget(name: "Rebuild3DNativeWorker", dependencies: ["Rebuild3DCore"]),
         .testTarget(name: "Rebuild3DTests", dependencies: ["Rebuild3DCore"])
     ]
 )

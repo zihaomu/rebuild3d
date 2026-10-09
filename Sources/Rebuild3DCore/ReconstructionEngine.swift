@@ -34,6 +34,12 @@ public struct RunReport: Codable, Sendable {
     public var messages: [String]
 }
 
+/// Only computational failures can trigger a different reconstruction route. Saving failures must not.
+public struct ReconstructionBackendFailure: LocalizedError {
+    public let detail: String
+    public var errorDescription: String? { detail }
+}
+
 /// Owns one session and consumes its entire output stream before releasing it.
 public actor ReconstructionEngine {
     private var session: PhotogrammetrySession?
@@ -78,6 +84,7 @@ public actor ReconstructionEngine {
                 do { try await Task.sleep(for: .seconds(1)) } catch { return }
             }
         }
+        var computing = false
         defer {
             sampler.cancel()
             session = nil
@@ -96,6 +103,7 @@ public actor ReconstructionEngine {
             configuration.sampleOrdering = .unordered
             configuration.featureSensitivity = .normal
             configuration.isObjectMaskingEnabled = project.manifest.settings.objectMasking
+            computing = true
             let current = try PhotogrammetrySession(input: input, configuration: configuration)
             session = current
             await onEvent(.stage(.reconstructing))
@@ -145,6 +153,7 @@ public actor ReconstructionEngine {
                 }
             }
             let modelURL = try resultState.completedModel(cancellationRequested: cancellationRequested)
+            computing = false
             await onEvent(.stage(.saving))
             guard !cancellationRequested else { throw CancellationError() }
             let updated: Project
@@ -168,6 +177,12 @@ public actor ReconstructionEngine {
             do { try saveReport(&report, project: project) }
             catch { await onEvent(.message("The run log could not be written: \(error.localizedDescription)")) }
             if cancellationRequested { throw CancellationError() }
+            if computing, !(error is CancellationError) {
+                let nsError = error as NSError
+                if !(nsError.domain == NSCocoaErrorDomain && [NSFileWriteOutOfSpaceError, NSFileWriteNoPermissionError].contains(nsError.code)) {
+                    throw ReconstructionBackendFailure(detail: error.localizedDescription)
+                }
+            }
             throw error
         }
     }

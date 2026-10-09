@@ -63,6 +63,13 @@ public struct Project: Sendable {
     public var provenanceModelURL: URL? {
         manifest.model?.approximation.flatMap { try? ProjectStore.resolve($0.provenanceModelPath, in: directory) }
     }
+    public var textureSourcesModelURL: URL? {
+        guard let reference = manifest.model?.approximation,
+              let bundle = try? ProjectStore.resolve(reference.bundlePath, in: directory),
+              let url = try? ProjectStore.resolve("texture-sources.usdz", in: bundle.deletingLastPathComponent()),
+              FileManager.default.fileExists(atPath: url.path) else { return nil }
+        return url
+    }
     public var modelIsOutdated: Bool {
         guard let model = manifest.model else { return false }
         return Set(model.photoIDs) != Set(manifest.photos.map(\.id))

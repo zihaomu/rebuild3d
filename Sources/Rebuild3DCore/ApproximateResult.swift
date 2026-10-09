@@ -55,7 +55,9 @@ public enum ApproximateResultStore {
         return bundle
     }
 
-    public static func importResult(from directory: URL, into project: Project) throws -> Project {
+    public static func importResult(from directory: URL, into project: Project,
+                                    cancellationCheck: @Sendable () throws -> Void = {}) throws -> Project {
+        try cancellationCheck()
         let bundle = try load(directory)
         let expected = Set(bundle.sourcePhotos.map(\.sha256))
         let actual = try project.manifest.photos.map { photo in
@@ -73,10 +75,12 @@ public enum ApproximateResultStore {
         defer { try? FileManager.default.removeItem(at: cache) }
         do {
             let snapshot = try PhotoPreparation.stageInputs(project: project, runID: runID)
+            try cancellationCheck()
             var updated = project
             updated.manifest.photos = snapshot.inputs.map(\.photo)
             let snapshotPath = try ProjectStore.saveInputSnapshot(snapshot, in: project.directory)
             try copyBundle(bundle, from: directory, to: research)
+            try cancellationCheck()
             let reference = ApproximationReference(bundlePath: "\(researchPath)/bundle.json",
                                                     provenanceModelPath: "\(researchPath)/\(bundle.provenanceModel)")
             return try ProjectStore.commitModel(from: research.appendingPathComponent(bundle.model), to: updated,
