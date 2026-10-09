@@ -1,26 +1,28 @@
-# Rebuild3D v0.1.0 Mac 安装说明
+# Rebuild3D v0.1.0 Mac 候选安装包说明
+
+**发布状态：2026-10-09，Mac 二进制与配套附件已按要求从 Release 撤下。当前仅提供源码和文档。** 以下保留本地候选包的操作、体积审计与验证记录，不代表存在可下载的应用附件。
 
 适用于 **Apple Silicon（M 系列）Mac、macOS 26 或更新版本**。已在 Apple M5、16 GiB 内存、macOS 26.4.1 上验证，其他机型尚未实机验证。建议至少预留 20 GB 磁盘空间，用于应用、首次组件准备和生成结果。
 
-## 下载与安装
+## 本地候选包安装方式
 
-1. 打开 [v0.1.0 Release](https://github.com/zihaomu/rebuild3d/releases/tag/v0.1.0)，展开 **Assets**。
-2. 下载 `Rebuild3D-0.1.0-macos-arm64.dmg` 和全部同名 `.dmgpart` 文件，放在**同一文件夹**，保留原文件名。
+1. 本地候选分卷保存在 `build/release-v0.1.0/assets-macos/`；重新制作的方法见[构建指南](开发与构建.md)。
+2. 将 `Rebuild3D-0.1.0-macos-arm64.dmg` 和全部同名 `.dmgpart` 文件放在**同一文件夹**，保留原文件名。
 3. 双击 `.dmg` 文件。macOS 会自动读取其他分卷，无需执行合并命令。
 4. 将窗口内的 **Rebuild3D.app** 拖入旁边的 **Applications（应用程序）**。
 5. 从“应用程序”打开 Rebuild3D，完成安装后可推出磁盘映像。
 
-三个安装文件合计约 **4.99 GB**，都需要下载：
+三个候选分卷合计约 **4.99 GB**，挂载时缺一不可：
 
 | 文件 | 大小 |
 | --- | --- |
-| [Rebuild3D-0.1.0-macos-arm64.dmg](https://github.com/zihaomu/rebuild3d/releases/download/v0.1.0/Rebuild3D-0.1.0-macos-arm64.dmg) | 1.99 GB |
-| [Rebuild3D-0.1.0-macos-arm64.002.dmgpart](https://github.com/zihaomu/rebuild3d/releases/download/v0.1.0/Rebuild3D-0.1.0-macos-arm64.002.dmgpart) | 1.99 GB |
-| [Rebuild3D-0.1.0-macos-arm64.003.dmgpart](https://github.com/zihaomu/rebuild3d/releases/download/v0.1.0/Rebuild3D-0.1.0-macos-arm64.003.dmgpart) | 1.00 GB |
+| `Rebuild3D-0.1.0-macos-arm64.dmg` | 1.99 GB |
+| `Rebuild3D-0.1.0-macos-arm64.002.dmgpart` | 1.99 GB |
+| `Rebuild3D-0.1.0-macos-arm64.003.dmgpart` | 1.00 GB |
 
 GitHub [单个 Release 附件须小于 2 GiB](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)，因此完整离线应用采用分卷。`.dmgpart` 不是独立安装包，不能只下载其中一份。`Source code (zip)` 和 `Source code (tar.gz)` 是源码，也不是应用。
 
-Release 同时提供 `INSTALL-macOS.txt` 和 `SHA256SUMS.txt`，分别用于离线阅读安装步骤和核对下载完整性。
+本地目录还保留 `INSTALL-macOS.txt` 和 `SHA256SUMS.txt`，分别用于阅读安装步骤和核对文件完整性；两者也已从 Release 移除。
 
 ## 安装包里有什么
 

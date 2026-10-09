@@ -51,7 +51,7 @@ readme='''# 七图佛像：第二阶段纹理增强来源包
 
 在拥有相同 7 张原照片的项目副本中使用 Load Approximation 导入本目录。普通模式显示照片纹理，Sources 显示几何推测。纹理来源模型可单独打开。所有附件在 `bundle.json` 中逐文件校验，导出时应保留整个来源包。
 
-本包不包含 HEIC 原件、VGGT 权重或可重新推理的模型权重。第一阶段使用的 VGGT-1B 研究权重许可仍为 CC-BY-NC-4.0；纹理增强未改变其许可边界。复现使用仓库记录的第一阶段几何和原始七图，具体命令见仓库 `doc/第二阶段-纹理增强探索记录-2026-10-08.md`。
+本包不包含 HEIC 原件、VGGT 权重或可重新推理的模型权重。第一阶段使用的 VGGT-1B 研究权重许可仍为 CC-BY-NC-4.0；纹理增强未改变其许可边界。复现使用仓库记录的第一阶段几何和原始七图，具体命令见[第二阶段历史探索记录](https://github.com/zihaomu/rebuild3d/blob/a586616d5e1d014a1c038ab85550c2748930674d/doc/第二阶段-纹理增强探索记录-2026-10-08.md)。
 '''
 (a.output/'README.md').write_text(readme)
 artifacts=[{'path':str(path.relative_to(a.output)),'sha256':sha(path),'byteCount':path.stat().st_size}

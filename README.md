@@ -6,7 +6,7 @@ Rebuild3D 是原生 macOS 照片建模应用。照片较少时自动尝试近似
 
 A native macOS app for local, photo-textured 3D reconstruction — including an automatic sparse-photo workflow with explicit geometry and color provenance.
 
-[v0.1.0 发布](https://github.com/zihaomu/rebuild3d/releases/tag/v0.1.0) · [使用说明](doc/v3-本地应用使用与交付说明.md) · [构建指南](doc/开发与构建.md) · [验收记录](doc/v3-一键生成执行与验收记录.md)
+[v0.1.0 发布](https://github.com/zihaomu/rebuild3d/releases/tag/v0.1.0) · [文档索引](doc/README.md) · [使用说明](doc/v3-本地应用使用与交付说明.md) · [构建指南](doc/开发与构建.md) · [验收记录](doc/v3-一键生成执行与验收记录.md)
 
 ![使用七张 HEIC 照片生成的带贴图佛像，右侧显示原照片](doc/assets/readme/seven-photo-result.png)
 
@@ -22,11 +22,7 @@ A native macOS app for local, photo-textured 3D reconstruction — including an 
 
 ## 获取与使用
 
-**[下载 v0.1.0 Mac 应用](https://github.com/zihaomu/rebuild3d/releases/tag/v0.1.0)**。安装包包含 Python、运行依赖和少图模型权重，无需安装开发工具，可以在本机离线生成。
-
-在 Release 的 **Assets** 中下载 `Rebuild3D-0.1.0-macos-arm64.dmg` 和全部同名 `.dmgpart`，放在同一文件夹，保持原文件名。双击 `.dmg`，将 **Rebuild3D.app** 拖入 **Applications（应用程序）** 后打开；macOS 会自动读取其他分卷。GitHub 单附件大小有限，因此完整应用拆成多个文件；`Source code` 是源码，不是安装包。
-
-当前应用尚未完成 Apple 公证。如果首次打开被阻止，按[安装说明](doc/macOS-安装说明.md)在“系统设置 → 隐私与安全性”中允许打开。建议至少预留 20 GB 磁盘空间；首次生成需准备约 6.22 GB 本地组件。随包的 VGGT-1B 权重限非商业使用，许可见文末。
+**v0.1.0 当前提供源码、文档及真实截图，Mac 二进制安装包已撤下。** GitHub 的 `Source code` 压缩包不是 `.app`；自行构建完整少图版本请参考[构建指南](doc/开发与构建.md)。本地候选包的体积明细、精简机会与验证记录见[安装包说明](doc/macOS-安装说明.md)。
 
 本机验收使用 Apple M5、16 GiB 内存、macOS 26.4.1。项目要求 macOS 26 或更新版本；当前仅验证 Apple Silicon arm64 构建，Intel 和其他机器兼容性尚未验证。
 

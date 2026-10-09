@@ -1,5 +1,7 @@
 # GOAL：仅用 7 张照片重建中央佛像
 
+> 历史阶段目标：保留第一阶段的目标和成果；通用一键生成的后续目标与验收见 [第三阶段 Goal](GOAL-第三阶段-v3一键生成.md)。
+
 > 日期：2026-10-08
 >
 > 状态：已完成本 goal 的 M0–M4：固定 7 张照片的粗网格、来源分区、7 视角对照和全流程复现均已交付；真实应用的加载、旋转、来源切换、保存、退出重开和附来源导出也已通过。完成范围是这组照片的研究重建及最小结果接入，不代表任意稀疏照片一键重建、完整 P1 或整个 v2 已完成。
@@ -41,7 +43,7 @@
 | IMG_4528.HEIC | `9e43a26bd714b24156e752904ea26040cdfa17640fcb23e652dd73dc0fcd5c15` |
 | IMG_4529.HEIC | `59b027187238f3f67666385e81882e7cd31204b9cb4d12c39515e6918512fdb8` |
 
-既有 [失败定位报告](iPhone16Pro-HEIC-失败定位-2026-10-08.md) 已确认：
+既有 [失败定位报告](https://github.com/zihaomu/rebuild3d/blob/a586616d5e1d014a1c038ab85550c2748930674d/doc/iPhone16Pro-HEIC-失败定位-2026-10-08.md) 已确认：
 
 1. 原图能导入、解码、预览、保存，失败发生在 `imageAlignment`。
 2. 原始文件夹、样本序列、移除深度、PNG/JPEG 转换、降分辨率，以及背景隔离开/关的 high 灵敏度，共 8 项对照均未取得模型和成功位姿结果。
@@ -76,7 +78,7 @@ flowchart TD
 | C：显式约束与近似壳体 | 在真实照片上标少量对应点，结合轮廓、粗相机、已有局部深度；联合优化粗体积/表面，再投影原图颜色 | 可旋转的粗佛像、误差图、推测区域分层 | 若轮廓不一致，调整相机和真实约束；不能靠生成细节掩盖整体形状矛盾 |
 | D：受限补全 | 只对未被照片确定或已有表面缺损处补全，保持可见部分的轮廓、器物和结构；每次与未补全版本对比 | 单独补全部件与前后对照 | 补全若与任一可见证据明显冲突就回退；不增加无照片依据的显著器物或肢体 |
 
-技术候选已经查阅官方来源；逐项本机验证结果见 [探索记录](七张佛像-探索记录-2026-10-08.md)，未运行的候选不能视为已经验证：
+技术候选已经查阅官方来源；逐项本机验证结果见 [探索记录](https://github.com/zihaomu/rebuild3d/blob/a586616d5e1d014a1c038ab85550c2748930674d/doc/七张佛像-探索记录-2026-10-08.md)，未运行的候选不能视为已经验证：
 
 - [COLMAP](https://colmap.github.io/tutorial) 提供可分阶段检查的 SfM/MVS；其 [遮罩机制](https://colmap.github.io/faq.html#mask-image-regions) 可排除背景关键点。它是几何对照和优化工具，不保证稀疏输入成功。
 - [LightGlue](https://github.com/cvg/LightGlue) 可作为更强的局部匹配候选；匹配器、特征提取器及权重需分别核对许可。官方区分了 LightGlue/DISK 与 SuperPoint 的许可，不能统一视为同一许可。
@@ -230,6 +232,6 @@ build/seven-photo-statue/
 | 应用加载、保存、重开、导出 | `ui-acceptance/verification.json` 记录实际 UI 操作和独立文件校验；普通模型在 Sources 开启时导出仍正确，15 份来源附件完整 |
 | 原图与旧项目保护 | 原失败项目清单摘要不变，7 个照片 ID 和源文件摘要不变；33 项核心测试通过 |
 
-以上相对路径以 `build/seven-photo-statue/` 为根。完整交付为 `delivery/Seven-photo-statue.rebuild3d`、`delivery/Seven-photo-statue.usdz` 和必须随模型保留的 `delivery/Seven-photo-statue.rebuild3d-result/`；操作方式及可复现命令见 [探索记录](七张佛像-探索记录-2026-10-08.md)。
+以上相对路径以 `build/seven-photo-statue/` 为根。完整交付为 `delivery/Seven-photo-statue.rebuild3d`、`delivery/Seven-photo-statue.usdz` 和必须随模型保留的 `delivery/Seven-photo-statue.rebuild3d-result/`；操作方式及可复现命令见 [探索记录](https://github.com/zihaomu/rebuild3d/blob/a586616d5e1d014a1c038ab85550c2748930674d/doc/七张佛像-探索记录-2026-10-08.md)。
 
 本次的应用接入为 **Load Approximation** 导入研究结果包，**Reconstruct** 仍是原 Object Capture 路径。模型不是精密扫描；全部几何均为推测，面部、细杆与遮挡处仍粗糙，只有相对尺度。轮廓补全占 13.60% 的三角面，不表示其余区域是测量真值。
