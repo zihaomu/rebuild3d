@@ -104,10 +104,29 @@ doc/                     方案、阶段目标、验收记录和应用截图
 Vendor/                  保留的上游代码及来源说明
 ```
 
-## 许可与致谢
+## 致谢
 
-Rebuild3D 仓库采用 [Apache-2.0](LICENSE)。基于 [ekarad1um/Photogrammetry](https://github.com/ekarad1um/Photogrammetry) 的部分保留 [MIT 许可](Vendor/Photogrammetry/LICENSE)；固定版本和来源见 [Vendor/UPSTREAM.md](Vendor/UPSTREAM.md)。Apple Object Capture 是系统框架。
+Rebuild3D 的开发建立在以下项目的工作之上。感谢原作者、维护者和社区贡献者分享代码、模型与工具。
 
-少图流程使用 [Meta VGGT](https://github.com/facebookresearch/vggt)。固定代码版本的 [VGGT License](https://github.com/facebookresearch/vggt/blob/a288dd0f14786c93483e45524328726ab7b1b4ce/LICENSE.txt)与 [VGGT-1B 权重模型卡](https://huggingface.co/facebook/VGGT-1B/blob/860abec7937da0a4c03c41d3c269c366e82abdf9/README.md)分别适用；权重标注 **CC BY-NC 4.0**，不能将仓库的 Apache-2.0 许可理解为对这些权重的商业授权。
+| 项目 | 在 Rebuild3D 中的用途 |
+| --- | --- |
+| [ekarad1um / Photogrammetry](https://github.com/ekarad1um/Photogrammetry) | 本项目的上游基础。重建服务与 RealityKit 模型查看器基于其会话管理和预览架构改造；原始源码及许可保留在 `Vendor/Photogrammetry/`，固定版本与衍生关系见 [来源记录](Vendor/UPSTREAM.md)。 |
+| [Meta / VGGT](https://github.com/facebookresearch/vggt) | 少图重建流程中的相机参数与深度预测，为后续几何融合、照片投影和贴图提供输入。 |
+| [Jonathan Young / xatlas](https://github.com/jpcy/xatlas) 与 [Markus Worchel / xatlas-python](https://github.com/mworchel/xatlas-python) | 通过 Python 绑定完成网格 UV 展开与图集排布，供主体照片贴图烘焙使用。 |
+| [PyTorch](https://github.com/pytorch/pytorch) 与 [Hugging Face / safetensors](https://github.com/huggingface/safetensors) | 模型权重加载、本地张量计算及 Apple Silicon 上的 MPS 推理。 |
+| [trimesh](https://github.com/mikedh/trimesh) | 网格处理、材质组织与带贴图 GLB 导出。 |
+| [OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) | 通过 `usd-core` 创建 USD 场景、网格和材质，并打包 USDZ。 |
+| [NumPy](https://github.com/numpy/numpy)、[SciPy](https://github.com/scipy/scipy) 与 [scikit-image](https://github.com/scikit-image/scikit-image) | 几何与图像数组计算、空间查询、插值及 Marching Cubes 表面提取。 |
+| [OpenCV Python](https://github.com/opencv/opencv-python) 与 [Pillow](https://github.com/python-pillow/Pillow) | 图像读写、前景掩膜处理和贴图生成所需的图像操作。 |
 
-额外对象测试使用 alansartlog 的 [Skull Turntable — Strong Lights — White Background](https://gitlab.com/photogrammetry-test-sets/skull-turntable-strong-lights-white-background)，按其 CC BY 4.0 声明记录来源。运行组件保留各自的许可文件，详见[本地应用使用与交付说明](doc/v3-本地应用使用与交付说明.md)。
+也感谢 alansartlog 提供的 [Skull Turntable — Strong Lights — White Background](https://gitlab.com/photogrammetry-test-sets/skull-turntable-strong-lights-white-background) 照片集，用于额外对象的重建测试；按其 CC BY 4.0 声明保留来源。
+
+以上列出主要上游与直接依赖，Python 依赖的固定版本见 [依赖锁定文件](scripts/texture/requirements-macos.lock)。应用还使用 Apple 的 Object Capture、RealityKit 与 Vision 系统框架。
+
+## 许可
+
+Rebuild3D 仓库采用 [Apache-2.0](LICENSE)。基于 Photogrammetry 的部分保留其 [MIT 许可及版权声明](Vendor/Photogrammetry/LICENSE)；xatlas 与 Python 绑定分别保留 [xatlas MIT 许可](scripts/texture/xatlas-LICENSE.txt)和 [xatlas-python MIT 许可](scripts/texture/xatlas-python-LICENSE.txt)。
+
+VGGT 固定代码版本的 [VGGT License](https://github.com/facebookresearch/vggt/blob/a288dd0f14786c93483e45524328726ab7b1b4ce/LICENSE.txt)与 [VGGT-1B 权重模型卡](https://huggingface.co/facebook/VGGT-1B/blob/860abec7937da0a4c03c41d3c269c366e82abdf9/README.md)分别适用；权重标注 **CC BY-NC 4.0**，不能将仓库的 Apache-2.0 许可理解为对这些权重的商业授权。
+
+其他运行组件保留各自的许可文件，详见[本地应用使用与交付说明](doc/v3-本地应用使用与交付说明.md)。
