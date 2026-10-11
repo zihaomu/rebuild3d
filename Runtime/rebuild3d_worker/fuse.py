@@ -13,12 +13,28 @@ from scipy.spatial import cKDTree
 from skimage.measure import marching_cubes
 
 from .geometry import backproject, project
+from .surface_smoothing import silhouette_dominated_vertices, smooth_preserving_features
 
 
 def sample(image, xy, order=1, outside=0):
     if image.ndim == 3:
         return np.stack([sample(image[..., i], xy, order, outside) for i in range(image.shape[2])], -1)
     return map_coordinates(image, [xy[:, 1], xy[:, 0]], order=order, mode="constant", cval=outside, prefilter=False)
+
+
+def extract_surface(field, origin, spacing):
+    """Orient the surface toward the positive (outside) side of our field.
+
+    In skimage's face-winding convention, descent points outward for this
+    inside-negative field. Starting with inverted faces and relying on
+    fix_normals only works for watertight components: Trimesh deliberately
+    leaves open components alone, which would reject their visible surfaces
+    during photographic texture selection.
+    """
+    vertices, faces, _, _ = marching_cubes(field, level=0, spacing=(spacing,) * 3,
+                                          gradient_direction="descent")
+    vertices += origin
+    return trimesh.Trimesh(vertices=vertices, faces=faces, process=True)
 
 
 def retain_component(index, distance, spacing, area, main_area, main_extent, face_support):
@@ -36,6 +52,26 @@ def retain_component(index, distance, spacing, area, main_area, main_extent, fac
     return bool(keep), reason, supported, view_areas.tolist()
 
 
+def resolve_depth_field(sdf_sum, weight, interior, hull, near=None):
+    """Keep multi-view near-surface agreement despite a distant depth outlier.
+
+    This is used only for the lower-resolution fallback. A single nearby view
+    cannot override the original field; the all-view silhouette constraint is
+    applied after either estimator. It never draws connectors between meshes.
+    """
+    field = np.where(weight > 0, sdf_sum / np.maximum(weight, 1e-6), interior)
+    policy = {"policy": "confidence-tsdf-v1"}
+    if near is not None:
+        near_sum, near_weight, near_views = near
+        original_field = field
+        field = np.where(near_views >= 2, near_sum / np.maximum(near_weight, 1e-6), field)
+        policy.update(policy="two-view-symmetric-near-band-v1", minimumNearViews=2,
+            nearBandVoxels=4, consensusVoxels=int(np.count_nonzero(near_views >= 2)),
+            changedSignVoxelsInsideHull=int(np.count_nonzero(
+                ((original_field > 0) != (field > 0)) & (hull <= 0))))
+    return np.maximum(field, hull), policy
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("run", type=Path)
@@ -50,6 +86,7 @@ def main():
     names = [t["name"] for t in transforms]
     depth, masks, confidence = data["depth"], data["masks"], data["confidence"]
     ext, intr = data["extrinsics"], data["intrinsics"]
+    low_resolution = depth.shape[-2:] == (392, 392)
     clouds = [backproject(d, k, e)[m] for d, k, e, m in zip(depth, intr, ext, masks)]
     cloud = np.concatenate(clouds)
     votes = np.zeros(len(cloud), dtype="uint8")
@@ -71,6 +108,10 @@ def main():
     print("Volume", dims.tolist(), "spacing", spacing, "voxels", len(points), flush=True)
     sdf_sum = np.zeros(len(points), dtype="float32")
     weight = np.zeros(len(points), dtype="float32")
+    if low_resolution:
+        near_sum = np.zeros(len(points), dtype="float32")
+        near_weight = np.zeros(len(points), dtype="float32")
+        near_views = np.zeros(len(points), dtype="uint8")
     foreground_views = np.zeros(len(points), dtype="uint8")
     hull = np.full(len(points), -truncation, dtype="float32")
     silhouette_fields = []
@@ -95,24 +136,36 @@ def main():
             certainty = np.clip(sample(confidence[i], xy) - 1, .1, 5.) * use
             sdf_sum[sl] += np.clip(difference, -truncation, truncation) * certainty
             weight[sl] += certainty
+            if low_resolution:
+                near = use & (np.abs(difference) <= truncation)
+                near_sum[sl] += difference * certainty * near
+                near_weight[sl] += certainty * near
+                near_views[sl] += near.astype("uint8")
         print("Integrated", names[i], flush=True)
     # Unobserved interior is a silhouette-based solid completion, not measured depth.
     # Voxels outside most physical photo frusta are unknown exterior, not a solid.
     interior = np.where(foreground_views >= interior_votes, -truncation, truncation)
-    field = np.where(weight > 0, sdf_sum / np.maximum(weight, 1e-6), interior)
-    field = np.maximum(field, hull).reshape(tuple(dims))
+    field, fusion_policy = resolve_depth_field(sdf_sum, weight, interior, hull,
+        near=(near_sum, near_weight, near_views) if low_resolution else None)
+    fusion_policy["modelImageSize"] = int(depth.shape[-1])
+    if low_resolution:
+        del near_sum, near_weight, near_views
+    field = field.reshape(tuple(dims))
     field[[0, -1], :, :] = truncation
     field[:, [0, -1], :] = truncation
     field[:, :, [0, -1]] = truncation
-    vertices, faces, _, _ = marching_cubes(field, level=0, spacing=(spacing,) * 3, gradient_direction="ascent")
-    vertices += lo
-    mesh = trimesh.Trimesh(vertices=vertices, faces=faces, process=True)
+    mesh = extract_surface(field, lo, spacing)
     parts = mesh.split(only_watertight=False)
     # Keep thin detached instrument/cloth components if substantive; discard voxel dust.
     substantial = [m for m in parts if len(m.faces) >= 80]
     removed_faces = sum(len(m.faces) for m in parts if len(m.faces) < 80)
     mesh = trimesh.util.concatenate(substantial)
-    trimesh.smoothing.filter_taubin(mesh, lamb=.5, nu=.53, iterations=3)
+    # Sharp rims of thin silhouette-constrained shells can open up under the
+    # ordinary Laplacian. Preserve those rims while leaving depth-dominated
+    # surfaces on the original smoothing path; support is recomputed below.
+    protected = silhouette_dominated_vertices(mesh.vertices, lo, spacing, field,
+                                              hull.reshape(tuple(dims)))
+    smoothing_policy = smooth_preserving_features(mesh, protected)
     mesh.fix_normals(multibody=True)
     vertices = mesh.vertices.copy()
     normals = mesh.vertex_normals.copy()
@@ -193,6 +246,7 @@ def main():
     vertex_completion = np.zeros(len(mesh.vertices), dtype=bool)
     vertex_completion[np.unique(mesh.faces[completion])] = True
     report = {"status": "candidate-needs-render-review", "inputRun": str(a.run), "photos": names,
+              "depthFusion": fusion_policy, "smoothing": smoothing_policy,
               "resolution": a.resolution, "gridDimensions": dims.tolist(), "voxelSpacingWorld": spacing,
               "boundsRule": {"boundsVotes": bounds_votes, "interiorVotes": interior_votes, "photos": len(names)},
               "boundedPointCount": len(bounded),

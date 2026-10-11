@@ -1,0 +1,101 @@
+{
+  "formatVersion": 1,
+  "frozenAtUTC": "2026-10-10T08:20:32.289330+00:00",
+  "id": "E2",
+  "role": "Independent replacement heldout after E was consumed for diagnosis; no inference, calibration or precision selection before next production configuration freeze",
+  "source": "https://github.com/natowi/dataset_flowerpot",
+  "revision": "bfef9dc6642da5f5b3cc0fdae5816d4bfd5d59b5",
+  "author": "Natowi",
+  "license": "CC-BY-SA-4.0",
+  "attribution": "dataset_flowerpot by Natowi, CC BY-SA 4.0. Includes Scale for Small-Object Photogrammetry by Samantha Porter; see upstream README.",
+  "selection": "Sort all full_dataset JPEG paths; indices floor(i*N/7) for i=0..6, selected before inference or reconstruction review",
+  "availableCount": 81,
+  "photoCount": 7,
+  "directory": "build/v4-quantization/heldout/E2-flowerpot-7",
+  "sourceReadmeSHA256": "66d0b6f983f68a943bf2c7971f336d935ad6e5efb436ddfbdc0cb54a72fec9e5",
+  "sourceLicenseSHA256": "a52b8ba68acb7d5daf0c88e7404693ef67f7197c2ef7a39f99ec6d8c382a1334",
+  "firstInferenceRun": {
+    "output": "/Users/zmu/work/my_project/rebuild3d_workspace/rebuild3d/build/v4-quantization/heldout-E2-final-01",
+    "registeredAtUTC": "2026-10-10T12:54:07.581091+00:00",
+    "configurationFreezeSHA256": "31c4ec306f1adf6dc04d3a26e5fa0f04e4c72d489c5e95379cb77d31bedfe90c",
+    "status": "failed",
+    "note": "Actual inference execution is proven by the stage events and reports.",
+    "reportSHA256": "00535a4f76201b6a6ca0bde674f606b48bd8db4c080daed3d129e0a6a1fa004e",
+    "continuations": [
+      {
+        "output": "/Users/zmu/work/my_project/rebuild3d_workspace/rebuild3d/build/v4-quantization/heldout-E2-continuation-01",
+        "startedAtUTC": "2026-10-10T13:26:14.472687+00:00",
+        "reason": "First 1800-second harness limit stopped the live baseline UV stage; original inference, fusion, candidate and frozen E2 inputs unchanged. Extended quality-only limit; not performance evidence.",
+        "phaseTimeoutSeconds": 7200,
+        "status": "core-pair-passed-quality-pending",
+        "reportSHA256": "4d11aafa2f22022554adf9de14dc799970843e029a54da766a8861af8a31cd9c"
+      }
+    ]
+  },
+  "files": [
+    {
+      "filename": "P81019-151014.jpg",
+      "bytes": 3740897,
+      "sha256": "4bc6162fe463aae425a93d35e7d7fdab120bfd5640bab9b95dcfaaaf61a69a9c",
+      "gitBlob": "e560a6b9dca63eaa7a9945934ac421cbe11d2ecc",
+      "downloadURL": "https://raw.githubusercontent.com/natowi/dataset_flowerpot/bfef9dc6642da5f5b3cc0fdae5816d4bfd5d59b5/full_dataset/P81019-151014.jpg"
+    },
+    {
+      "filename": "P81019-151035.jpg",
+      "bytes": 4053219,
+      "sha256": "a83e375adee53423d257a96d074bd7c0cce270be79b5e13872a1cdf6d7548f9c",
+      "gitBlob": "82bd758aa597c5711dca54bab8c430ad39b55a7f",
+      "downloadURL": "https://raw.githubusercontent.com/natowi/dataset_flowerpot/bfef9dc6642da5f5b3cc0fdae5816d4bfd5d59b5/full_dataset/P81019-151035.jpg"
+    },
+    {
+      "filename": "P81019-151102.jpg",
+      "bytes": 4010805,
+      "sha256": "33b6e1b88c8bddde25eeea767ddffa161786c64dd0ef92343bbf02e1baf6af32",
+      "gitBlob": "7701c5d997aad6d3ba19505a404eec6f7e67725e",
+      "downloadURL": "https://raw.githubusercontent.com/natowi/dataset_flowerpot/bfef9dc6642da5f5b3cc0fdae5816d4bfd5d59b5/full_dataset/P81019-151102.jpg"
+    },
+    {
+      "filename": "P81019-151122.jpg",
+      "bytes": 3904564,
+      "sha256": "f1e6a6366f42892a9ebf6fce806a303a102396a727a47f29cd981127ffc9e2a1",
+      "gitBlob": "f604ffd7568e13ba136cbdc190be7443a16fd835",
+      "downloadURL": "https://raw.githubusercontent.com/natowi/dataset_flowerpot/bfef9dc6642da5f5b3cc0fdae5816d4bfd5d59b5/full_dataset/P81019-151122.jpg"
+    },
+    {
+      "filename": "P81019-151152.jpg",
+      "bytes": 3695260,
+      "sha256": "bc12f6621a2b2fe12dbb9e1c55b2ad1b555c2aebf1cc221f7623f0e21aa91878",
+      "gitBlob": "646005a4a9ff4903414a676230dff1a92ebfa105",
+      "downloadURL": "https://raw.githubusercontent.com/natowi/dataset_flowerpot/bfef9dc6642da5f5b3cc0fdae5816d4bfd5d59b5/full_dataset/P81019-151152.jpg"
+    },
+    {
+      "filename": "P81019-151219.jpg",
+      "bytes": 3575995,
+      "sha256": "2664c86137f0ab5a741ed0b9a9c81371012cd2b9ecadb55bf5dd02cd93b4d713",
+      "gitBlob": "28ba044dd14297d99b3c6ca77b1abeeeb3f77cf6",
+      "downloadURL": "https://raw.githubusercontent.com/natowi/dataset_flowerpot/bfef9dc6642da5f5b3cc0fdae5816d4bfd5d59b5/full_dataset/P81019-151219.jpg"
+    },
+    {
+      "filename": "P81019-151243.jpg",
+      "bytes": 3638315,
+      "sha256": "cdd4a3705871299a42735d583fe4e2bbdd28b1124c8c3f306927dd2f67b91f3f",
+      "gitBlob": "bcd5e5fbe8c674d99c5bfcd8cdee92a70578e863",
+      "downloadURL": "https://raw.githubusercontent.com/natowi/dataset_flowerpot/bfef9dc6642da5f5b3cc0fdae5816d4bfd5d59b5/full_dataset/P81019-151243.jpg"
+    }
+  ],
+  "independence": "Different author and physical flowerpot object from A/B statues, D skull and E dice. No dataset inference or supplied reconstruction inspected during selection.",
+  "candidate09FinalReview": {
+    "atUTC": "2026-10-10T15:01:04.396708+00:00",
+    "status": "relative-quality-passed-with-shared-reconstruction-limitations",
+    "report": "build/v4-quantization/heldout-E2-review-02/candidate/review-v4/visual-review.json",
+    "reportSHA256": "9291ebcf74e00f55126b7c8c0e5bca90d9846a7bac11e82befe5c6978a551015",
+    "candidateRuntimeManifestSHA256": "1796bc7e6bff7fc2c59397fcef304268b2cf71c11915b54169425846cfb95069",
+    "usedForTuning": false,
+    "scope": [
+      "Relative acceptance against an inferred v3 model, not physical ground truth",
+      "Baseline resumed original unchanged prepare/inference/fusion after an initial harness timeout; candidate was a fresh full task",
+      "Parallel quality jobs and resumed baseline exclude this pair from performance measurements",
+      "No UI or whole-Goal completion claim"
+    ]
+  }
+}

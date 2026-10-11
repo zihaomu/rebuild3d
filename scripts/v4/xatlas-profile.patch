@@ -1,0 +1,60 @@
+diff --git a/src/atlas.cpp b/src/atlas.cpp
+index ed32f7d..8fe4128 100644
+--- a/src/atlas.cpp
++++ b/src/atlas.cpp
+@@ -25,6 +25,7 @@
+ #include "atlas.hpp"
+ 
+ #include <array>
++#include <chrono>
+ #include <random>
+ 
+ #include <pybind11/numpy.h>
+@@ -139,6 +140,26 @@ void Atlas::generate(xatlas::ChartOptions const& chartOptions, xatlas::PackOptio
+     }
+ }
+ 
++py::dict Atlas::generateProfile(xatlas::ChartOptions const& chartOptions, xatlas::PackOptions const& packOptions)
++{
++    using Clock = std::chrono::steady_clock;
++    double charts, packing;
++    {
++        py::gil_scoped_release release;
++        auto begin = Clock::now();
++        xatlas::ComputeCharts(m_atlas, chartOptions);
++        auto split = Clock::now();
++        xatlas::PackCharts(m_atlas, packOptions);
++        auto end = Clock::now();
++        charts = std::chrono::duration<double>(split - begin).count();
++        packing = std::chrono::duration<double>(end - split).count();
++    }
++    py::dict result;
++    result["computeChartsSeconds"] = charts;
++    result["packChartsSeconds"] = packing;
++    return result;
++}
++
+ MeshResult Atlas::getMesh(std::uint32_t index) const
+ {
+     if (index >= m_atlas->meshCount)
+@@ -329,6 +350,7 @@ void Atlas::bind(py::module& m)
+         .def(py::init<>())
+         .def("add_mesh", &Atlas::addMesh, py::arg("positions"), py::arg("indices"), py::arg("normals") = std::nullopt, py::arg("uvs") = std::nullopt)
+         .def("add_uv_mesh", &Atlas::addUvMesh, py::arg("uvs"), py::arg("indices"), py::arg("face_materials") = std::nullopt)
++        .def("generate_profile", &Atlas::generateProfile, py::arg("chart_options") = xatlas::ChartOptions(), py::arg("pack_options") = xatlas::PackOptions())
+         .def("generate", &Atlas::generate, py::arg("chart_options") = xatlas::ChartOptions(), py::arg("pack_options") = xatlas::PackOptions(), py::arg("verbose") = false)
+         .def("get_mesh", &Atlas::getMesh, py::arg("mesh_index"))
+         .def("get_mesh_vertex_assignment", &Atlas::getMeshVertexAssignment, py::arg("mesh_index"))
+diff --git a/src/atlas.hpp b/src/atlas.hpp
+index 8c33fc0..d420acd 100644
+--- a/src/atlas.hpp
++++ b/src/atlas.hpp
+@@ -71,6 +71,8 @@ public:
+ 
+     void generate(xatlas::ChartOptions const& chartOptions = xatlas::ChartOptions(), xatlas::PackOptions const& packOptions = xatlas::PackOptions(), bool verbose = false);
+ 
++    pybind11::dict generateProfile(xatlas::ChartOptions const& chartOptions, xatlas::PackOptions const& packOptions);
++
+     MeshResult getMesh(std::uint32_t index) const;
+ 
+     VertexAssignment getMeshVertexAssignment(std::uint32_t meshIndex) const;

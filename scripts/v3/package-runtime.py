@@ -56,6 +56,9 @@ def main():
     shutil.copy2(args.native, destination / "rebuild3d-native-worker")
     subprocess.run(["clang++", "-O3", "-std=c++17", "-dynamiclib", str(root / "Runtime/rebuild3d_worker/raster.cpp"),
                     "-o", str(destination / "worker/rebuild3d_worker/raster.dylib")], check=True)
+    subprocess.run(["xcrun", "clang++", "-O2", "-std=c++17", "-dynamiclib",
+                    "-Wl,-install_name,@rpath/uv_layout.dylib", str(root / "Runtime/rebuild3d_worker/uv_layout.cpp"),
+                    "-o", str(destination / "worker/rebuild3d_worker/uv_layout.dylib")], check=True)
     # Dependency dist-info and embedded notices are retained with their complete wheels.
     shutil.copy2(root / "scripts/texture/requirements-macos.lock", destination / "requirements-macos.lock")
     (destination / "NOTICE.md").write_text(

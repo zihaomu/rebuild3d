@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-09",
+  "assets": [
+    {
+      "file": "seven-photos-and-masks.jpg",
+      "sourceEvidence": "build/v3-oneclick/runs/B/inputs/automatic-mask-review.jpg",
+      "sha256": "d96ed100d1d18ed417344a68365836d2aa8197ff5e13ad21dbe30782fa6ff193",
+      "type": "Unmodified existing local evidence image",
+      "description": "B 集自动准备阶段的七图与遮罩总览；初始前景提案，不代表最终遮罩验收。"
+    },
+    {
+      "file": "geometry-turntable.jpg",
+      "sourceEvidence": "build/v3-oneclick/runs/B-managed/review-clay-turntable.jpg",
+      "sha256": "fdc9a59204febb44672a3b9ffc55a1ecb682612c3b42f31465195837f90a2fc9",
+      "type": "Unmodified existing local evidence image",
+      "description": "B-managed 实际输出的十二视角无纹理渲染；并非十二张输入照片。"
+    }
+  ],
+  "reusedScreenshots": "../readme/screenshots.json",
+  "diagrams": {
+    "specs": "diagrams/specs/",
+    "generated": "diagrams/generated/",
+    "type": "Explanatory schematics, not measured data or reconstruction results",
+    "network": "local-only"
+  },
+  "notes": "Copied evidence files are byte-identical. No original HEIC files, model weights, or full-resolution texture atlases are included."
+}

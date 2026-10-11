@@ -1,0 +1,143 @@
+{
+  "formatVersion": 1,
+  "frozenAtUTC": "2026-10-09T15:05:43.932387+00:00",
+  "id": "E",
+  "role": "held-out object; do not run inference or use for precision selection until production configuration is frozen",
+  "source": "https://gitlab.com/photogrammetry-test-sets/dice-turntable-strong-lights-heavily-textured-w-watercolors",
+  "revision": "78e0a887ba5263da66910fb4f4da0d9763e9177a",
+  "author": "alansartlog",
+  "license": "CC-BY-4.0",
+  "attribution": "Photogrammetry Test Set: Dice - Turntable - Strong Lights - Heavily Textured w Watercolors, by alansartlog / CC BY 4.0",
+  "selection": "Sorted numbered JPGs; indices floor(i*N/7), i=0..6; selected before viewing reconstructions.",
+  "availableCount": 33,
+  "photoCount": 7,
+  "directory": "build/v4-quantization/heldout/E-dice-7",
+  "sourceReadmeSHA256": "9cbec2e01c9d6564b806d55e08d4f3db890ad6fc67b4b2c43195e8b11b2cd9ab",
+  "firstInferenceRun": {
+    "output": "/Users/zmu/work/my_project/rebuild3d_workspace/rebuild3d/build/v4-quantization/heldout-final-01",
+    "registeredAtUTC": "2026-10-10T07:22:50.072197+00:00",
+    "configurationFreezeSHA256": "c807cae5a14624db6f5697742633d3b02613237c6a2407ec0ab628a86b5058d3",
+    "status": "failed",
+    "note": "Actual inference execution is proven by the stage events and reports.",
+    "reportSHA256": "03cbeb14dc003708b5c3415422d3989726d860e8da37e777f4ceb390ba2a7a92",
+    "continuations": [
+      {
+        "output": "/Users/zmu/work/my_project/rebuild3d_workspace/rebuild3d/build/v4-quantization/heldout-continuation-01",
+        "startedAtUTC": "2026-10-10T07:33:36.203101+00:00",
+        "reason": "First harness 600-second limit included cold component preparation and stopped live v3 UV; production algorithm and E configuration unchanged",
+        "phaseTimeoutSeconds": 1800,
+        "status": "core-pair-passed-quality-pending",
+        "reportSHA256": "17ae34945d037bedf65d3b7760b3ddc742058208cad7fcfc0070974c281c0228"
+      }
+    ],
+    "qualityReview": {
+      "status": "quality-failed-frozen-gates-and-visible-shape-defects",
+      "reviewDirectory": "/Users/zmu/work/my_project/rebuild3d_workspace/rebuild3d/build/v4-quantization/heldout-review-01",
+      "visualReviewSHA256": "04c451cb94af161e2891e43aac4916e8f0fc601245bec9c37ab4e695d882fcec",
+      "atUTC": "2026-10-10T08:03:17.009516+00:00",
+      "note": "Initial timeout and continuation records preserved. E has been consumed; not an unused heldout set."
+    }
+  },
+  "files": [
+    {
+      "filename": "01.JPG",
+      "bytes": 2297400,
+      "sha256": "a93a749cb078629a3ea100c67671f31f8eb9ee84251104c87ba494b23f2585e9",
+      "gitBlob": "7901d6bf442dd7342c3ab6f1ee57d3ca1a9d82b1",
+      "downloadURL": "https://gitlab.com/api/v4/projects/photogrammetry-test-sets%2Fdice-turntable-strong-lights-heavily-textured-w-watercolors/repository/files/01.JPG/raw?ref=78e0a887ba5263da66910fb4f4da0d9763e9177a"
+    },
+    {
+      "filename": "05.JPG",
+      "bytes": 2293044,
+      "sha256": "fb19a32b876a7d2c2fb41ba67c18f64e190860c97f39e80e0acb5479af911b80",
+      "gitBlob": "98f3643f4bd686493f7eeafd5069f9571960eb50",
+      "downloadURL": "https://gitlab.com/api/v4/projects/photogrammetry-test-sets%2Fdice-turntable-strong-lights-heavily-textured-w-watercolors/repository/files/05.JPG/raw?ref=78e0a887ba5263da66910fb4f4da0d9763e9177a"
+    },
+    {
+      "filename": "10.JPG",
+      "bytes": 2395655,
+      "sha256": "6d9a78887aa24c01ace737062bd696d1b29446a5173433b5ea17ac5fdf8aa381",
+      "gitBlob": "d91c3373a34da0309352577f14ed9c6af14c6ef5",
+      "downloadURL": "https://gitlab.com/api/v4/projects/photogrammetry-test-sets%2Fdice-turntable-strong-lights-heavily-textured-w-watercolors/repository/files/10.JPG/raw?ref=78e0a887ba5263da66910fb4f4da0d9763e9177a"
+    },
+    {
+      "filename": "15.JPG",
+      "bytes": 2380101,
+      "sha256": "45397b12acc547f45d331ac612c56f84a8075b83392df36be3e3cd37bf2731b0",
+      "gitBlob": "7ad91bee9aecc61e7cb82aa7f677ab4970bf4ffb",
+      "downloadURL": "https://gitlab.com/api/v4/projects/photogrammetry-test-sets%2Fdice-turntable-strong-lights-heavily-textured-w-watercolors/repository/files/15.JPG/raw?ref=78e0a887ba5263da66910fb4f4da0d9763e9177a"
+    },
+    {
+      "filename": "19.JPG",
+      "bytes": 2439009,
+      "sha256": "1d6f77cd48c1a823946e264398097a1a21d65010b0d34416f45348f5253ae541",
+      "gitBlob": "91e9357bba28e03aba08c063fc8940ff4febbeac",
+      "downloadURL": "https://gitlab.com/api/v4/projects/photogrammetry-test-sets%2Fdice-turntable-strong-lights-heavily-textured-w-watercolors/repository/files/19.JPG/raw?ref=78e0a887ba5263da66910fb4f4da0d9763e9177a"
+    },
+    {
+      "filename": "24.JPG",
+      "bytes": 2407648,
+      "sha256": "db46febc21b5b70f5258695e01dcfca283a44c9990cc5ced1b8cdb92ed1fc941",
+      "gitBlob": "2a16c403b8d70a9faea20929fa6d87a0ee1f3911",
+      "downloadURL": "https://gitlab.com/api/v4/projects/photogrammetry-test-sets%2Fdice-turntable-strong-lights-heavily-textured-w-watercolors/repository/files/24.JPG/raw?ref=78e0a887ba5263da66910fb4f4da0d9763e9177a"
+    },
+    {
+      "filename": "29.JPG",
+      "bytes": 2358751,
+      "sha256": "addcc35060b9ee7da89de1c438dfc1425440902e27045a8647ce8cf0ca06c530",
+      "gitBlob": "5832b23616a61da572b6136ead546672cafc7056",
+      "downloadURL": "https://gitlab.com/api/v4/projects/photogrammetry-test-sets%2Fdice-turntable-strong-lights-heavily-textured-w-watercolors/repository/files/29.JPG/raw?ref=78e0a887ba5263da66910fb4f4da0d9763e9177a"
+    }
+  ],
+  "postFailureDiagnostics": {
+    "atUTC": "2026-10-10T08:22:24.436086+00:00",
+    "currentRole": "Consumed heldout; diagnostic input after recorded quality failure",
+    "reports": [
+      "build/v4-quantization/heldout-diagnosis-01/report.json",
+      "build/v4-quantization/heldout-layer-trace-01/comparison.json",
+      "build/v4-quantization/heldout-arithmetic-01/report.json",
+      "build/v4-quantization/heldout-hybrid-01/report.json",
+      "build/v4-quantization/heldout-linear-bridge-01/probe.json",
+      "build/v4-quantization/heldout-weight-error-01/probe.json",
+      "build/v4-quantization/heldout-group32-01/report.json",
+      "build/v4-quantization/heldout-group32-frontend-01/probe.json",
+      "build/v4-quantization/heldout-group32-heads32-01/report.json",
+      "build/v4-quantization/heldout-linear-precision-01/report.json",
+      "build/v4-quantization/heldout-linear-precision-g64-01/report.json",
+      "build/v4-quantization/linear-precision-integration-01/integration.json",
+      "build/v4-quantization/linear-precision-integration-01/E-inference-comparison.json",
+      "build/v4-quantization/linear-precision-integration-01/E-review/review-v4/metrics.json",
+      "build/v4-quantization/linear-precision-integration-01/E-review/review-v4/visual-review.json",
+      "build/v4-quantization/linear-precision-integration-01/E-boundary-diagnostic.json",
+      "build/v4-quantization/linear-precision-integration-01/E-surface-diagnostic-01/dark-marks.json",
+      "build/v4-quantization/E-gap-repair-01/rays.json",
+      "build/v4-quantization/E-gap-repair-01/full-review/feature-pinned/review-v4/metrics.json",
+      "build/v4-quantization/surface-quality-regression-01/A-518-full/feature-pinned/review-v4/metrics.json",
+      "build/v4-quantization/E-gap-repair-02/acceptance-summary.json",
+      "build/v4-quantization/E-gap-repair-02/native-gap-comparison.json",
+      "build/v4-quantization/E-gap-repair-02/native-rays.json",
+      "build/v4-quantization/E-gap-repair-02/production-parity.json"
+    ],
+    "ongoingProbe": null,
+    "replacementHeldoutRegistry": "doc/v4-新增保留测试输入清单-E2.json",
+    "note": "No production configuration or frozen threshold changed so far. Any promoted E-informed change must pass the newly frozen independent heldout.",
+    "lastStatusReconciledAtUTC": "2026-10-10T09:31:22.149034+00:00",
+    "latestNumericConclusion": "Candidate08/runtime09 W8 group32 with FP32 packed-linear arithmetic passes E inference and full-model numeric gates; rotation P95 0.8944 deg, worst silhouette IoU drop 0.7939 pp, photo coverage 71.1213%. A/B518 and A/B/D12 392 managed inference regressions pass. E local surface dark marks/gaps remain under visual investigation; full visual quality not passed.",
+    "managedCandidate": {
+      "name": "Rebuild3D-v4-candidate-08",
+      "runtimeManifestSHA256": "70b4f1fd0afe60d9e9b8acd3dc06f30f798a76e8b3988876266f30de70e8ab50",
+      "weightSHA256": "019a011bf90014754d0ae485533f94d18610e287d0977a1206cc226308e45c7c",
+      "linearComputePolicy": "fp32-packed-gemm-bias-fp16-output-v1",
+      "fullVisualQualityPassed": false
+    }
+  },
+  "ongoingProbe": {
+    "status": "relative-gap-repair-and-full-model-review-completed",
+    "output": "build/v4-quantization/E-gap-repair-02",
+    "summary": "acceptance-summary.json",
+    "atUTC": "2026-10-10T12:58:15.430554+00:00",
+    "candidate": "Rebuild3D-v4-candidate-09.app",
+    "remaining": "Independent E2, affected application and performance acceptance",
+    "limits": "Remaining microholes and common reconstructed shape errors documented; no geometric ground-truth claim."
+  }
+}

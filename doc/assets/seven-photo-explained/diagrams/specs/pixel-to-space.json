@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "direction": "DOWN",
+  "backgroundColor": "#ffffff",
+  "title": "照片中的一个点，怎样变成空间中的一个点？",
+  "nodes": [
+    {
+      "id": "pixel",
+      "role": "evidence",
+      "text": "像素位置\n例如衣甲上的一点",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "camera",
+      "role": "inference",
+      "text": "预测相机参数\n镜头、位置与朝向",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "depth",
+      "role": "inference",
+      "text": "预测深度\n这一点的前后位置",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "backprojection",
+      "role": "context",
+      "text": "反投影\n把像素放回三维空间",
+      "width": 270,
+      "shape": "rectangle"
+    },
+    {
+      "id": "cloud",
+      "role": "conclusion",
+      "text": "多张照片的点云\n放在同一个坐标系中",
+      "width": 270,
+      "shape": "rectangle"
+    }
+  ],
+  "edges": [
+    {
+      "from": "pixel",
+      "to": "backprojection",
+      "label": "对应图中位置",
+      "relation": "leads-to"
+    },
+    {
+      "from": "camera",
+      "to": "backprojection",
+      "label": "确定空间方向",
+      "relation": "leads-to"
+    },
+    {
+      "from": "depth",
+      "to": "backprojection",
+      "label": "确定沿方向的位置",
+      "relation": "leads-to"
+    },
+    {
+      "from": "backprojection",
+      "to": "cloud",
+      "label": "对各张照片重复",
+      "relation": "leads-to"
+    }
+  ]
+}

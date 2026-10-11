@@ -43,9 +43,14 @@ def main():
     surface.CreateOutput('surface',Sdf.ValueTypeNames.Token);material.CreateSurfaceOutput().ConnectToSource(surface.ConnectableAPI(),'surface')
     for i,(label,select) in enumerate([('learned-depth',~completed),('silhouette-completion',completed)]):
         if not select.any(): continue
-        m=trimesh.Trimesh(vertices=vertices,faces=faces[select],vertex_normals=normals,process=False)
-        m.visual=trimesh.visual.TextureVisuals(uv=uv,material=mat)
-        m.remove_unreferenced_vertices()
+        # Compact all corner attributes together before constructing the mesh.
+        # Removing vertices afterwards invalidates supplied normals in the pinned
+        # trimesh build and recomputes them across UV/provenance seams.
+        used,local_faces=np.unique(faces[select],return_inverse=True)
+        m=trimesh.Trimesh(vertices=vertices[used],faces=local_faces.reshape(-1,3),
+                         vertex_normals=normals[used],process=False)
+        m.visual=trimesh.visual.TextureVisuals(uv=uv[used],material=mat)
+        assert np.array_equal(m.vertex_normals[m.faces],normals[faces[select]])
         scene.add_geometry(m,node_name=label,geom_name=label)
         mesh=UsdGeom.Mesh.Define(stage,f'/Object/region_{i}');mesh.GetPrim().SetDisplayName(label)
         mesh.GetPrim().SetCustomDataByKey('rebuild3d:sourceRegion',label)
@@ -65,7 +70,9 @@ def main():
     report_name='asset-report.json' if name=='model' else f'{name}-asset-report.json'
     write_json(root/report_name,{'triangles':len(faces),'textureSize':list(texture.size),'textureFile':a.texture,
         'glbSHA256':sha(root/f'{name}.glb'),'usdzSHA256':sha(root/f'{name}.usdz'),'basecolorSHA256':sha(root/a.texture),
-        'allGeometryInferred':True,'perPixelTexture':True,'glbBytes':(root/f'{name}.glb').stat().st_size,'usdzBytes':(root/f'{name}.usdz').stat().st_size})
+        'allGeometryInferred':True,'perPixelTexture':True,
+        'normalSource':'original whole-surface normals; preserved across UV and provenance seams',
+        'glbBytes':(root/f'{name}.glb').stat().st_size,'usdzBytes':(root/f'{name}.usdz').stat().st_size})
     print((root/report_name).read_text())
 
 

@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "direction": "DOWN",
+  "backgroundColor": "#ffffff",
+  "title": "一块衣甲的颜色，怎样写进贴图？",
+  "nodes": [
+    {
+      "id": "surface",
+      "role": "context",
+      "text": "UV 像素对应\n网格表面的一点",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "cameras",
+      "role": "inference",
+      "text": "相机与可见性\n检查遮挡与背景",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "projection",
+      "role": "context",
+      "text": "投影回候选照片\n找到对应的图像位置",
+      "width": 270,
+      "shape": "rectangle"
+    },
+    {
+      "id": "original",
+      "role": "evidence",
+      "text": "全分辨率照片\n读取真实照片颜色",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "sampling",
+      "role": "context",
+      "text": "选择较合适的来源\n读取该位置附近的颜色",
+      "width": 270,
+      "shape": "rectangle"
+    },
+    {
+      "id": "atlas",
+      "role": "conclusion",
+      "text": "写入新的约 4K 贴图\n再按 UV 贴回模型",
+      "width": 270,
+      "shape": "rectangle"
+    }
+  ],
+  "edges": [
+    {
+      "from": "surface",
+      "to": "projection",
+      "label": "对应位置",
+      "relation": "leads-to"
+    },
+    {
+      "from": "cameras",
+      "to": "projection",
+      "label": "约束候选来源",
+      "relation": "leads-to"
+    },
+    {
+      "from": "projection",
+      "to": "sampling",
+      "label": "照片坐标",
+      "relation": "leads-to"
+    },
+    {
+      "from": "original",
+      "to": "sampling",
+      "label": "高分辨率像素",
+      "relation": "leads-to"
+    },
+    {
+      "from": "sampling",
+      "to": "atlas",
+      "label": "保存颜色及来源",
+      "relation": "leads-to"
+    }
+  ]
+}

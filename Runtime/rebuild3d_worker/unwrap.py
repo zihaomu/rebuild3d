@@ -2,33 +2,35 @@
 import argparse
 import importlib.metadata
 import json
+import time
 from pathlib import Path
 
 import numpy as np
 import trimesh
 import xatlas
 from .common import Budget, sha, write_json
+from .uv_partition import DEFAULT_FACE_BUDGET, generate_uv
 
 
 def main():
     p=argparse.ArgumentParser(); p.add_argument('geometry',type=Path); p.add_argument('output',type=Path)
     p.add_argument('--size',type=int,default=2048);p.add_argument('--reuse-raw',type=Path)
+    p.add_argument('--chunk-face-budget',type=int,default=DEFAULT_FACE_BUDGET,help='0 keeps the whole mesh; positive values split UV work only')
     a=p.parse_args(); a.output.mkdir(parents=True,exist_ok=False); budget=Budget(a.output)
     d=np.load(a.geometry); v=d['verticesBeforeDisplay'].astype('float32'); f=d['faces'].astype('uint32')
     mesh=trimesh.Trimesh(vertices=v,faces=f,process=False)
+    phases = {}
     if a.reuse_raw:
-        raw=np.load(a.reuse_raw);mapping=raw['vertexMap'];indices=raw['faces'];uv=raw['uv']
-        width,height=int(raw['width']),int(raw['height']);charts=int(raw['charts']);utilization=float(raw['utilization'])
+        raw=dict(np.load(a.reuse_raw))
+        phases['reusedRawUVSHA256']=sha(a.reuse_raw)
     else:
-        atlas=xatlas.Atlas(); atlas.add_mesh(v,f,np.asarray(mesh.vertex_normals,dtype='float32'))
-        packing=xatlas.PackOptions(); packing.resolution=a.size; packing.padding=4; packing.bilinear=True
-        print('Unwrap',len(f),'faces',flush=True)
-        atlas.generate(pack_options=packing)
-        mapping,indices,uv=atlas[0]
-        width,height=atlas.width,atlas.height;charts=atlas.get_mesh_chart_count(0);utilization=atlas.utilization
-        np.savez_compressed(a.output/'raw-uv.npz',vertexMap=mapping,faces=indices,uv=uv,
-                            width=width,height=height,charts=charts,utilization=utilization)
-        assert atlas.atlas_count==1, 'Use a larger atlas or explicit multiple-atlas support'
+        print('Unwrap',len(f),'faces, maximum chunk',a.chunk_face_budget,flush=True)
+        raw,phases=generate_uv(v,f,np.asarray(mesh.vertex_normals,dtype='float32'),a.size,a.chunk_face_budget)
+        np.savez_compressed(a.output/'raw-uv.npz',**raw)
+    mapping,indices,uv=raw['vertexMap'],raw['faces'],raw['uv']
+    width,height=int(raw['width']),int(raw['height'])
+    charts,utilization=int(raw['charts']),float(raw['utilization'])
+    repair_started=time.monotonic()
     assert np.array_equal(mapping[indices],f), 'Face/corner order changed; mapping must be resolved before continuing'
     ab=uv[indices[:,1]]-uv[indices[:,0]]; ac=uv[indices[:,2]]-uv[indices[:,0]]
     area=np.abs(ab[:,0]*ac[:,1]-ab[:,1]*ac[:,0])
@@ -51,6 +53,9 @@ def main():
                         originalFaceID=np.arange(len(f)),width=width,height=height)
     write_json(a.output/'report.json',{'xatlasVersion':importlib.metadata.version('xatlas'),'inputSHA256':sha(a.geometry),
         'requestedResolution':a.size,'width':width,'height':height,'xatlasUtilizationBeforeRepair':utilization,
+        'chunkFaceBudget':int(raw['chunkFaceBudget']) if 'chunkFaceBudget' in raw else None,
+        'meshChunks':int(raw['meshChunks']) if 'meshChunks' in raw else None,
+        'xatlasExtensionSHA256':sha(xatlas.__file__),'timingsSeconds':{**phases,'repairAndSaveSeconds':time.monotonic()-repair_started},
         'chartCount':charts,'paddingPixels':4,'originalVertices':len(v),'uvVertices':len(mapping),
         'repairedDegenerateUVFaces':len(degenerate),
         'triangles':len(f),'allUVFacesHaveArea':True,'surfaceExactlyPreserved':True,'sameFaceCornerOrder':True,

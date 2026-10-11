@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "direction": "DOWN",
+  "backgroundColor": "#ffffff",
+  "title": "七张照片：形状与颜色分开处理",
+  "nodes": [
+    {
+      "id": "photos",
+      "role": "evidence",
+      "text": "7 张原照片",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "geometry",
+      "role": "inference",
+      "text": "缩小副本 → VGGT\n估计相机与深度",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "masks",
+      "role": "context",
+      "text": "前景遮罩\n圈出要保留的主体",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "colors",
+      "role": "evidence",
+      "text": "保留原始分辨率\n用于后续照片取色",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "mesh",
+      "role": "inference",
+      "text": "融合与补全\n生成三角形网格",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "texture",
+      "role": "context",
+      "text": "UV 展开与烘焙\n把颜色贴回表面",
+      "width": 235,
+      "shape": "rectangle"
+    },
+    {
+      "id": "result",
+      "role": "conclusion",
+      "text": "带贴图的 3D 模型\n附带两类来源",
+      "width": 235,
+      "shape": "rectangle"
+    }
+  ],
+  "edges": [
+    {
+      "from": "photos",
+      "to": "geometry",
+      "label": "估计形状",
+      "relation": "leads-to"
+    },
+    {
+      "from": "photos",
+      "to": "masks",
+      "label": "识别主体",
+      "relation": "leads-to"
+    },
+    {
+      "from": "photos",
+      "to": "colors",
+      "label": "保留细节",
+      "relation": "leads-to"
+    },
+    {
+      "from": "geometry",
+      "to": "mesh",
+      "label": "相机与深度",
+      "relation": "leads-to"
+    },
+    {
+      "from": "masks",
+      "to": "mesh",
+      "label": "约束轮廓",
+      "relation": "leads-to"
+    },
+    {
+      "from": "mesh",
+      "to": "texture",
+      "label": "确定表面位置",
+      "relation": "leads-to"
+    },
+    {
+      "from": "colors",
+      "to": "texture",
+      "label": "选图并取色",
+      "relation": "leads-to"
+    },
+    {
+      "from": "texture",
+      "to": "result",
+      "label": "打包与保存",
+      "relation": "leads-to"
+    }
+  ]
+}

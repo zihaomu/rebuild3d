@@ -4,6 +4,7 @@ import fcntl
 from datetime import datetime, timezone
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -187,13 +188,26 @@ class Supervisor:
         parameters = manifest.get("parameters", {})
         native = Path(runtime["nativeWorker"]).resolve()
         raster = Path(runtime["rasterLibrary"]).resolve()
+        uv_layout_library = Path(__file__).with_name("uv_layout.dylib").resolve()
+        if not uv_layout_library.is_file():
+            raise RuntimeError("Managed UV layout component is missing; install or repair the runtime.")
         code = {p.name: sha(p) for p in Path(__file__).parent.glob("*.py")}
         repository = Path(runtime["vggtRepository"]).resolve()
         model_code = {str(p.relative_to(repository)): sha(p) for p in (repository / "vggt").rglob("*.py")}
         packages = {name: importlib.metadata.version(name) for name in
                     ("torch", "numpy", "pillow", "scipy", "scikit-image", "trimesh", "xatlas", "usd-core", "opencv-python-headless")}
+        weight_manifest = Path(runtime["weights"]).with_suffix(".json")
+        # Inspect only for dependency/environment selection here. infer verifies
+        # full checkpoint + companion hashes and embedded policy before loading.
+        weight_recipe = json.loads(weight_manifest.read_text()).get("recipe", {}) if weight_manifest.is_file() else {}
+        is_mlx = weight_recipe.get("format") == "rebuild3d-vggt-mlx"
+        if is_mlx:
+            packages.update({name: importlib.metadata.version(name) for name in ("mlx", "mlx-metal")})
         identity = fingerprint({"task": manifest, "code": code, "native": sha(native), "raster": sha(raster),
                                 "modelCode": model_code, "weights": sha(runtime["weights"]),
+                                "weightManifest": sha(weight_manifest) if weight_manifest.is_file() else None,
+                                "xatlasExtension": sha(importlib.util.find_spec("xatlas").origin),
+                                "uvLayoutLibrary": sha(uv_layout_library),
                                 "python": sys.version, "packages": packages})
         existing = root / "task.json"
         if existing.exists() and json.loads(existing.read_text()) != manifest:
@@ -201,10 +215,17 @@ class Supervisor:
         atomic_json(existing, manifest)
         atomic_json(root / "photos.json", photos)
         atomic_json(root / "input-use.json", {"allPhotos": all_photos, "photoUse": manifest.get("photoUse", [])})
+        atomic_json(root / "runtime-identity.json", {"identity": identity, "packages": packages,
+                    "backendID": weight_recipe.get("backendID", "pytorch-mps-v3"),
+                    "weightManifestSHA256": sha(weight_manifest) if weight_manifest.is_file() else None,
+                    "workerCode": code, "uvLayoutLibrarySHA256": sha(uv_layout_library),
+                    "modelImageSize": parameters.get("modelSize", 518)})
         environment = os.environ.copy()
         environment.update(PYTHONPATH=str(Path(__file__).resolve().parent.parent),
                            REBUILD3D_RASTER_LIBRARY=str(raster), PYTHONUNBUFFERED="1",
-                           PYTORCH_ENABLE_MPS_FALLBACK="1", HF_HUB_OFFLINE="1")
+                           REBUILD3D_UV_LAYOUT_LIBRARY=str(uv_layout_library),
+                           PYTORCH_ENABLE_MPS_FALLBACK="0" if is_mlx else "1", HF_HUB_OFFLINE="1",
+                           PYTHONDONTWRITEBYTECODE="1")
         python = [sys.executable, "-m"]
         stage = lambda name, *args: python + ["rebuild3d_worker." + name] + [str(a) for a in args]
         memory_gib = float(parameters.get("memoryGiB", 10.5))
@@ -216,7 +237,8 @@ class Supervisor:
                 "--weights", runtime["weights"], "--size", parameters.get("modelSize", 518), "--max-memory-gib", memory_gib)),
             ("fusion", "fusion", stage("fuse", root / "inference", root / "fusion", "--resolution", parameters.get("volumeResolution", 256))),
             ("unwrap", "uv-native", stage("unwrap", root / "fusion/face-provenance.npz", root / "uv-native", "--size", 2048)),
-            ("atlas", "uv", stage("scale_uv", root / "uv-native", root / "uv", "--size", parameters.get("textureSize", 4096))),
+            ("atlas", "uv", stage("scale_uv", root / "uv-native", root / "uv", "--size", parameters.get("textureSize", 4096),
+                "--geometry", root / "fusion/face-provenance.npz")),
             ("texture", "texture", stage("bake", root / "inputs", root, root / "uv", root / "texture",
                 "--selection", "quality", "--quality-scale", 24, "--full-mask", "--safe-fill", "--smooth", 8)),
             ("package", "bundle", stage("package", root, root / "bundle")),

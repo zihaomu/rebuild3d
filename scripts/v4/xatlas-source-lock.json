@@ -1,0 +1,17 @@
+{
+  "bindings": {
+    "url": "https://github.com/mworchel/xatlas-python",
+    "revision": "24d7e3e99e498eb11a94f5efd54fd9f754f2b88a"
+  },
+  "xatlas": {
+    "url": "https://github.com/jpcy/xatlas",
+    "revision": "f700c7790aaa030e794b52ba7791a05c085faf0c"
+  },
+  "pybind11": {
+    "url": "https://github.com/pybind/pybind11",
+    "revision": "a2e59f0e7065404b44dfe92a28aca47ba1378dc4"
+  },
+  "patch": "xatlas-profile.patch",
+  "buildType": "Release",
+  "pythonABI": "cp312-macos-arm64"
+}
